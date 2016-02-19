@@ -1,0 +1,5 @@
+makefile
+skafe-agent
+skafe-server
+*.bak
+*.test
