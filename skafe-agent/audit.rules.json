@@ -1,0 +1,316 @@
+{
+    "delete": true,
+    "enable": "1",
+    "buffer": "16348",
+    "rate": "500",
+    "file_rules": [
+        {
+            "path": "/etc/audit/",
+            "key": "audit",
+            "permission": "wa"
+        },
+        {
+            "path": "/sbin/init",
+            "key": "init",
+            "permission": "wa"
+        },
+        {
+            "path": "/etc/systemd",
+            "key": "init",
+            "permission": "wa"
+        },
+        {
+            "path": "/etc/pam.d",
+            "key": "pam",
+            "permission": "wa"
+        },
+        {
+            "path": "/etc/security",
+            "key": "pam",
+            "permission": "wa"
+        },
+        {
+            "path": "/lib/security",
+            "key": "pam",
+            "permission": "wa"
+        },
+        {
+            "path": "/etc/group",
+            "key": "user",
+            "permission": "wa"
+        },
+        {
+            "path": "/etc/passwd",
+            "key": "user",
+            "permission": "wa"
+        },
+        {
+            "path": "/etc/gshadow",
+            "key": "user",
+            "permission": "wa"
+        },
+        {
+            "path": "/etc/shadow",
+            "key": "user",
+            "permission": "wa"
+        },
+        {
+            "path": "/etc/sudoers",
+            "key": "user",
+            "permission": "wa"
+        }
+    ],
+    "syscall_rules": [
+        {
+            "fields": [
+                {
+                    "name": "path",
+                    "value": "/bin/ls",
+                    "op": "eq"
+                },
+                {
+                    "name": "perm",
+                    "value": "x",
+                    "op": "eq"
+                }
+            ],
+            "actions": [
+                "exit",
+                "never"
+            ]
+        },
+        {
+            "fields": [
+                {
+                    "name": "path",
+                    "value": "/bin/sh",
+                    "op": "eq"
+                },
+                {
+                    "name": "perm",
+                    "value": "x",
+                    "op": "eq"
+                }
+            ],
+            "actions": [
+                "exit",
+                "never"
+            ]
+        },
+        {
+            "fields": [
+                {
+                    "name": "path",
+                    "value": "/bin/grep",
+                    "op": "eq"
+                },
+                {
+                    "name": "perm",
+                    "value": "x",
+                    "op": "eq"
+                }
+            ],
+            "actions": [
+                "exit",
+                "never"
+            ]
+        },
+        {
+            "fields": [
+                {
+                    "name": "path",
+                    "value": "/bin/egrep",
+                    "op": "eq"
+                },
+                {
+                    "name": "perm",
+                    "value": "x",
+                    "op": "eq"
+                }
+            ],
+            "actions": [
+                "exit",
+                "never"
+            ]
+        },
+        {
+            "fields": [
+                {
+                    "name": "path",
+                    "value": "/usr/bin/tail",
+                    "op": "eq"
+                },
+                {
+                    "name": "perm",
+                    "value": "x",
+                    "op": "eq"
+                }
+            ],
+            "actions": [
+                "exit",
+                "never"
+            ]
+        },
+        {
+            "fields": [
+                {
+                    "name": "path",
+                    "value": "/bin/stty",
+                    "op": "eq"
+                },
+                {
+                    "name": "perm",
+                    "value": "x",
+                    "op": "eq"
+                }
+            ],
+            "actions": [
+                "exit",
+                "never"
+            ]
+        },
+        {
+            "fields": [
+                {
+                    "name": "path",
+                    "value": "/usr/bin/tty",
+                    "op": "eq"
+                },
+                {
+                    "name": "perm",
+                    "value": "x",
+                    "op": "eq"
+                }
+            ],
+            "actions": [
+                "exit",
+                "never"
+            ]
+        },
+        {
+            "fields": [
+                {
+                    "name": "path",
+                    "value": "/usr/bin/wc",
+                    "op": "eq"
+                },
+                {
+                    "name": "perm",
+                    "value": "x",
+                    "op": "eq"
+                }
+            ],
+            "actions": [
+                "exit",
+                "never"
+            ]
+        },
+        {
+            "fields": [
+                {
+                    "name": "path",
+                    "value": "/bin/ping",
+                    "op": "eq"
+                },
+                {
+                    "name": "perm",
+                    "value": "x",
+                    "op": "eq"
+                }
+            ],
+            "actions": [
+                "exit",
+                "never"
+            ]
+        },
+        {
+            "fields": [
+                {
+                    "name": "path",
+                    "value": "/bin/sleep",
+                    "op": "eq"
+                },
+                {
+                    "name": "perm",
+                    "value": "x",
+                    "op": "eq"
+                }
+            ],
+            "actions": [
+                "exit",
+                "never"
+            ]
+        },
+        {
+            "fields": [
+                {
+                    "name": "path",
+                    "value": "/bin/touch",
+                    "op": "eq"
+                },
+                {
+                    "name": "perm",
+                    "value": "x",
+                    "op": "eq"
+                }
+            ],
+            "actions": [
+                "exit",
+                "never"
+            ]
+        },
+        {
+            "key": "exec",
+            "fields": [
+                {
+                    "name": "arch",
+                    "value": 64,
+                    "op": "eq"
+                }
+            ],
+            "syscalls": [
+                "execve"
+            ],
+            "actions": [
+                "exit",
+                "always"
+            ]
+        },
+        {
+            "key": "time-change",
+            "fields": [
+                {
+                    "name": "arch",
+                    "value": 32,
+                    "op": "eq"
+                }
+            ],
+            "syscalls": [
+                "adjtimex",
+                "settimeofday"
+            ],
+            "actions": [
+                "always",
+                "exit"
+            ]
+        },
+        {
+            "key": "time-change",
+            "fields": [
+                {
+                    "name": "arch",
+                    "value": 64,
+                    "op": "eq"
+                }
+            ],
+            "syscalls": [
+                "adjtimex",
+                "settimeofday"
+            ],
+            "actions": [
+                "always",
+                "exit"
+            ]
+        }
+    ]
+}
