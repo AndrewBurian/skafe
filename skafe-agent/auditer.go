@@ -19,8 +19,32 @@ func Auditor(receivedEvents chan<- AuditEvent, logger *log.Logger) {
 		panic(err)
 	}
 
+	var serial int = -1
+	var fullEvent AuditEvent
+
 	for ev := range newEvents {
-		receivedEvents <- ev.Data
+		// check to see if this is the first audit event
+		if serial == -1 {
+			serial = ev.Serial
+		}
+
+		// if this is a new event, send the previous one
+		if ev.Serial != serial {
+			receivedEvents <- fullEvent
+
+			// empty out map
+			for key, _ := range fullEvent {
+				delete(fullEvent, key)
+			}
+
+			// update serial number
+			serial = ev.Serial
+		}
+
+		// add new elements to map
+		for key, val := range ev.Data {
+			fullEvent[key] = val
+		}
 	}
 }
 
