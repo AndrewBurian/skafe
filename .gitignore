@@ -4,3 +4,4 @@ skafe-server/skafe-server
 *.bak
 *.test
 !*.json
+*.swp

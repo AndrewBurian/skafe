@@ -20,7 +20,7 @@ func Auditor(receivedEvents chan<- AuditEvent, logger *log.Logger) {
 	}
 
 	var serial int = -1
-	var fullEvent AuditEvent
+	var fullEvent AuditEvent = make(map[string]string)
 
 	for ev := range newEvents {
 		// check to see if this is the first audit event
