@@ -2,7 +2,7 @@ package main
 
 import (
 	//audit "github.com/andrewburian/libaudit-go"
-	"fmt"
+	//"fmt"
 	audit "github.com/mozilla/libaudit-go"
 	"io/ioutil"
 	"log"
@@ -84,9 +84,6 @@ func setupAudit() (<-chan *audit.AuditEvent, error) {
 }
 
 func EventCallback(msg *audit.AuditEvent, ce chan error, args ...interface{}) {
-	fmt.Println(msg)
-
-	eventChan := args[1].(chan *audit.AuditEvent)
-
+	eventChan := args[0].(chan *audit.AuditEvent)
 	eventChan <- msg
 }
