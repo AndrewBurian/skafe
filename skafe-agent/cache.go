@@ -8,10 +8,8 @@ func Cache(receivedEvents <-chan AuditEvent, server chan<- AuditEvent, logger *l
 
 	for {
 		event := <-receivedEvents
-		logger.Println("Cache Received event")
 
 		server <- event
-		logger.Println("Cache Sent event")
 
 	}
 
