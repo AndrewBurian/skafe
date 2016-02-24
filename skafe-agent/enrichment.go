@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
 )
 
 func Enricher(newEvents <-chan AuditEvent, enrichedEvents chan<- AuditEvent, logger *log.Logger) {
@@ -14,7 +15,7 @@ func Enricher(newEvents <-chan AuditEvent, enrichedEvents chan<- AuditEvent, log
 		event := <-newEvents
 
 		// enrich the event
-		GetUser(&event)
+		GetSourceUser(&event)
 		GetParentProcTitle(&event)
 		GetFullCmd(&event)
 
@@ -23,8 +24,26 @@ func Enricher(newEvents <-chan AuditEvent, enrichedEvents chan<- AuditEvent, log
 	}
 }
 
-func GetUser(ev *AuditEvent) {
-	(*ev)["username"] = "Geoff, probably"
+func GetSourceUser(ev *AuditEvent) {
+	uid, ok := (*ev)["uid"]
+	if !ok {
+		return
+	}
+
+	uname, err := GetUsername(uid)
+	if err != nil {
+		return
+	}
+
+	(*ev)["uname"] = uname
+}
+
+func GetUsername(uid string) (string, error) {
+	usr, err := user.LookupId(uid)
+	if err != nil {
+		return "", err
+	}
+	return usr.Username, nil
 }
 
 func GetFullCmd(ev *AuditEvent) {
