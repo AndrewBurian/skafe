@@ -1,5 +1,10 @@
-[Rule]
+[MatchRule]
 action = match
+regextype = posix
 
-[Rule.test]
+[ScriptRule]
+action = script
+
+[MatchRule.test]
 watch = base
+match_key = execve

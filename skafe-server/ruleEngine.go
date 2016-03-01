@@ -115,19 +115,19 @@ func SetupRuleTree(conf *ServerConfig) (*RuleNode, error) {
 
 		// skip any rule that doesn't watch anything
 		if !rule.HasKey("watch") {
-			conf.serverLog.Printf("Rule %s has no watch", rule.Name())
+			conf.serverLog.Printf("Rule [%s] has no watch, skipping", rule.Name())
 			continue
 		}
 
 		// check to ensure the watched rule exists
 		if _, ok := ruleTree[rule.Key("watch").Value()]; !ok {
-			conf.serverLog.Printf("Rule %s watching non-existant rule %s", rule.Name(), rule.Key("watch").Value())
+			conf.serverLog.Printf("Rule [%s] watching non-existant rule [%s], skipping", rule.Name(), rule.Key("watch").Value())
 			continue
 		}
 
 		// skip any rule with no action
 		if !rule.HasKey("action") {
-			conf.serverLog.Printf("Rule %s has no action", rule.Name())
+			conf.serverLog.Printf("Rule [%s] has no action, skipping", rule.Name())
 			continue
 		}
 
@@ -147,7 +147,7 @@ func SetupRuleTree(conf *ServerConfig) (*RuleNode, error) {
 
 		// check if the rule created sucessfully
 		if err != nil {
-			conf.serverLog.Printf("Failed to create rule %s: %s", rule.Name(), err.Error())
+			conf.serverLog.Printf("Failed to create rule [%s]: %s", rule.Name(), err.Error())
 			return nil, err
 		}
 
@@ -165,9 +165,10 @@ func SetupRuleTree(conf *ServerConfig) (*RuleNode, error) {
 
 func createMatchRule(conf *ini.Section) (*RuleNode, error) {
 	rule := &RuleNode{
-		name:   conf.Name(),
-		action: MATCH,
-		watch:  conf.Key("watch").Value(),
+		name:    conf.Name(),
+		action:  MATCH,
+		watch:   conf.Key("watch").Value(),
+		matches: make(map[string]*regexp.Regexp),
 	}
 
 	// set the regex type
