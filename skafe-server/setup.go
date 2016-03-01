@@ -2,8 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/go-ini/ini"
 	"log"
+	"log/syslog"
 	"os"
 )
 
@@ -109,33 +111,76 @@ func setupConfig(cfgPath string) (*ServerConfig, error) {
 
 func setupLoggers(conf *ServerConfig) error {
 
-	flags := os.O_WRONLY | os.O_CREATE | os.O_APPEND
+	var err error
 
-	// setup log files
-	logFile, err := os.OpenFile(conf.serverLogPath, flags, 0640)
+	// System logger
+	switch conf.serverLogPath {
+	case "stdout", "stderr":
+		conf.serverLog, err = setupStdioLogger(conf.serverLogPath)
+	case "syslog":
+		conf.serverLog, err = setupSysLogger()
+	default:
+		conf.serverLog, err = setupFileLogger(conf.serverLogPath)
+	}
+
 	if err != nil {
 		return err
 	}
 
-	eventFile, err := os.OpenFile(conf.eventLogPath, flags, 0640)
+	// Alert logger
+	switch conf.alertLogPath {
+	case "stdout", "stderr":
+		conf.alertLog, err = setupStdioLogger(conf.alertLogPath)
+	case "syslog":
+		conf.alertLog, err = setupSysLogger()
+	default:
+		conf.alertLog, err = setupFileLogger(conf.alertLogPath)
+	}
+
 	if err != nil {
 		return err
 	}
 
-	alertFile, err := os.OpenFile(conf.alertLogPath, flags, 0640)
+	// Event logger
+	switch conf.eventLogPath {
+	case "stdout", "stderr":
+		conf.eventLog, err = setupStdioLogger(conf.eventLogPath)
+	case "syslog":
+		conf.eventLog, err = setupSysLogger()
+	default:
+		conf.eventLog, err = setupFileLogger(conf.eventLogPath)
+	}
+
 	if err != nil {
 		return err
 	}
-
-	// create a SyncWriter so multiple goroutines can safely use a logger
-	syncLog := NewSyncWriter(logFile)
-	syncEvent := NewSyncWriter(eventFile)
-	syncAlert := NewSyncWriter(alertFile)
-
-	// target default logger to this file
-	conf.serverLog = log.New(syncLog, "", log.LstdFlags)
-	conf.eventLog = log.New(syncEvent, "", log.LstdFlags)
-	conf.alertLog = log.New(syncAlert, "", log.LstdFlags)
 
 	return nil
+}
+
+func setupFileLogger(path string) (*log.Logger, error) {
+
+	logFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
+	if err != nil {
+		return nil, err
+	}
+
+	return log.New(NewSyncWriter(logFile), "", log.LstdFlags), nil
+}
+
+func setupStdioLogger(path string) (*log.Logger, error) {
+	switch path {
+	case "stdout":
+		return log.New(os.Stdout, "", log.LstdFlags), nil
+
+	case "stderr":
+		return log.New(os.Stderr, "", log.LstdFlags), nil
+	default:
+		return nil, fmt.Errorf("Why did you call setupStdioLogger with a non-stdio...")
+
+	}
+}
+
+func setupSysLogger() (*log.Logger, error) {
+	return syslog.NewLogger(syslog.LOG_ALERT|syslog.LOG_DAEMON, 0)
 }

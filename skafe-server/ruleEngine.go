@@ -94,6 +94,8 @@ func SetupRuleTree(conf *ServerConfig) (*RuleNode, error) {
 			continue
 		}
 
+		conf.serverLog.Println("Loading rules file " + conf.rulesDirPath + "/" + fileInfo.Name())
+
 		// append to the array to be opened
 		err := rulesConf.Append(conf.rulesDirPath + "/" + fileInfo.Name())
 		if err != nil {
