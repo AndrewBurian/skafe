@@ -1,0 +1,5 @@
+[Rule]
+action = match
+
+[Rule.test]
+watch = base

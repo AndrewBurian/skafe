@@ -15,6 +15,7 @@ type ServerConfig struct {
 	serverLogPath string
 	eventLogPath  string
 	alertLogPath  string
+	rulesDirPath  string
 
 	// loggers
 	serverLog *log.Logger
@@ -71,6 +72,8 @@ func setupConfig(cfgPath string) (*ServerConfig, error) {
 		eventLogPath:  "/var/log/skafe/events.log",
 		alertLogPath:  "/var/log/skafe/alerts.log",
 
+		rulesDirPath: "/etc/skafe/rules",
+
 		port: uint16(6969),
 
 		tls: false,
@@ -95,6 +98,10 @@ func setupConfig(cfgPath string) (*ServerConfig, error) {
 
 	if key, err := defSec.GetKey("alertlog"); err == nil {
 		cfg.alertLogPath = key.Value()
+	}
+
+	if key, err := defSec.GetKey("rulesdir"); err == nil {
+		cfg.rulesDirPath = key.Value()
 	}
 
 	return cfg, nil

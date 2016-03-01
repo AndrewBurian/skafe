@@ -1,8 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"github.com/go-ini/ini"
 	"github.com/robertkrimen/otto"
+	"io/ioutil"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -13,6 +17,7 @@ const (
 type RuleNode struct {
 	name    string
 	action  int
+	watch   string
 	matches map[string]*regexp.Regexp
 	script  *otto.Script
 	nodes   []*RuleNode
@@ -65,4 +70,140 @@ func RunNode(node *RuleNode, ev *AuditEvent) {
 	for _, n := range node.nodes {
 		RunNode(n, ev)
 	}
+}
+
+func SetupRuleTree(conf *ServerConfig) (*RuleNode, error) {
+
+	// Create the base rule. A matching rule with no matches will match all
+	baseNode := &RuleNode{
+		action: MATCH,
+	}
+
+	// get all files in the rules directory
+	fileInfos, err := ioutil.ReadDir(conf.rulesDirPath)
+	if err != nil {
+		return nil, err
+	}
+
+	rulesConf := ini.Empty()
+	// loop through and add them to the list
+	for _, fileInfo := range fileInfos {
+
+		// skip if not a .rules file
+		if !strings.HasSuffix(fileInfo.Name(), ".rules") {
+			continue
+		}
+
+		// append to the array to be opened
+		err := rulesConf.Append(conf.rulesDirPath + "/" + fileInfo.Name())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// create a map for storing the rules
+	ruleTree := make(map[string]*RuleNode)
+	ruleTree["base"] = baseNode
+
+	// for each rule section
+	for _, rule := range rulesConf.Sections() {
+
+		// skip the default section
+		if rule.Name() == ini.DEFAULT_SECTION {
+			continue
+		}
+
+		// skip any rule that doesn't watch anything
+		if !rule.HasKey("watch") {
+			conf.serverLog.Printf("Rule %s has no watch", rule.Name())
+			continue
+		}
+
+		// check to ensure the watched rule exists
+		if _, ok := ruleTree[rule.Key("watch").Value()]; !ok {
+			conf.serverLog.Printf("Rule %s watching non-existant rule %s", rule.Name(), rule.Key("watch").Value())
+			continue
+		}
+
+		// skip any rule with no action
+		if !rule.HasKey("action") {
+			conf.serverLog.Printf("Rule %s has no action", rule.Name())
+			continue
+		}
+
+		// create the rule
+		var newRule *RuleNode
+		var err error
+
+		if rule.Key("action").Value() == "match" {
+
+			newRule, err = createMatchRule(rule)
+
+		} else if rule.Key("action").Value() == "script" {
+
+			newRule, err = createScriptRule(rule)
+
+		}
+
+		// check if the rule created sucessfully
+		if err != nil {
+			conf.serverLog.Printf("Failed to create rule %s: %s", rule.Name(), err.Error())
+			return nil, err
+		}
+
+		// register it to watch the target rule
+		watchedRule := ruleTree[newRule.watch]
+		watchedRule.nodes = append(watchedRule.nodes, newRule)
+
+		// add this rule to the tree
+		ruleTree[newRule.name] = newRule
+
+	}
+
+	return baseNode, nil
+}
+
+func createMatchRule(conf *ini.Section) (*RuleNode, error) {
+	rule := &RuleNode{
+		name:   conf.Name(),
+		action: MATCH,
+		watch:  conf.Key("watch").Value(),
+	}
+
+	// set the regex type
+	regexType := conf.Key("regextype").Value()
+	if regexType != "posix" {
+		regexType = "perl"
+	}
+
+	for _, key := range conf.Keys() {
+
+		if !strings.HasPrefix(key.Name(), "match_") {
+			continue
+		}
+
+		match := strings.TrimLeft(key.Name(), "match_")
+		var regex *regexp.Regexp
+		var err error
+
+		if regexType == "posix" {
+			regex, err = regexp.CompilePOSIX(key.Value())
+		} else {
+			regex, err = regexp.Compile(key.Value())
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		rule.matches[match] = regex
+
+	}
+
+	return rule, nil
+}
+
+func createScriptRule(conf *ini.Section) (*RuleNode, error) {
+	return nil, fmt.Errorf("Not implemented")
+	//TODO
 }
