@@ -6,8 +6,11 @@ import (
 	"net"
 )
 
-func ClientLink(incomingEvents chan<- AuditEvent) {
-	listenConn, err := net.Listen("tcp", ":6969")
+// Listen for connecting clients
+func ClientLink(conf *ServerConfig, incomingEvents chan<- *AuditEvent) {
+	listenStr := fmt.Sprintf(":%d", conf.port)
+
+	listenConn, err := net.Listen("tcp", listenStr)
 	if err != nil {
 		panic(err)
 	}
@@ -25,16 +28,19 @@ func ClientLink(incomingEvents chan<- AuditEvent) {
 
 }
 
-func HandleClient(client net.Conn, events chan<- AuditEvent) {
+// Handle each individual client
+func HandleClient(client net.Conn, events chan<- *AuditEvent) {
 
 	defer client.Close()
 
 	decoder := gob.NewDecoder(client)
 
-	var ev AuditEvent
-
 	for {
-		err := decoder.Decode(&ev)
+		// create the audit event
+		ev := &AuditEvent{}
+
+		// decode into new event
+		err := decoder.Decode(ev)
 		if err != nil {
 			fmt.Println(err)
 			break

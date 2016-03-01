@@ -40,6 +40,7 @@ func Auditor(receivedEvents chan<- AuditEvent, logger *log.Logger) {
 			// update serial number
 			serial = ev.Serial
 		}
+		//TODO Send event on EOE
 
 		// add new elements to map
 		for key, val := range ev.Data {

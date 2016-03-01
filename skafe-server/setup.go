@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/go-ini/ini"
 	"log"
 	"os"
@@ -53,13 +52,15 @@ func main() {
 	conf.serverLog.Println("SKAFE Server started!")
 	defer conf.serverLog.Println("SKAFE Server terminated.")
 
-	evChan := make(chan AuditEvent)
+	evChan := make(chan *AuditEvent, 32)
+	ruleChan := make(chan *AuditEvent, 32)
 
-	go ClientLink(evChan)
+	go ClientLink(conf, evChan)
 
-	for {
-		fmt.Println(<-evChan)
-	}
+	go RuleEngine(conf, ruleChan)
+
+	QueueEvents(conf, evChan, ruleChan)
+
 }
 
 func setupConfig(cfgPath string) (*ServerConfig, error) {
