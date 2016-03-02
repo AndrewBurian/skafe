@@ -14,6 +14,12 @@ const (
 	SCRIPT int = 2
 )
 
+const (
+	LOG   int = 1
+	ALERT int = 2
+	BOTH  int = 3
+)
+
 type RuleNode struct {
 	name    string
 	action  int
@@ -21,26 +27,35 @@ type RuleNode struct {
 	matches map[string]*regexp.Regexp
 	script  *otto.Script
 	nodes   []*RuleNode
+	trigger int
 }
 
-func RuleEngine(conf *ServerConfig, events <-chan *AuditEvent) {
+func RuleEngine(conf *ServerConfig, base *RuleNode, events <-chan *AuditEvent) {
 
 	// the channel to dispatch events to workers over
-	//workers := make(chan *AuditEvent)
+	workers := make(chan *AuditEvent)
+
+	go RuleEngineWorker(conf, base, workers)
+
+	for ev := range events {
+		workers <- ev
+	}
+
+	close(workers)
 
 }
 
-func RuleEngineWorker(base *RuleNode, events <-chan *AuditEvent) {
+func RuleEngineWorker(conf *ServerConfig, base *RuleNode, events <-chan *AuditEvent) {
 
 	// so long as there are events to process
 	for ev := range events {
 
 		// recurively follow the descision tree
-		RunNode(base, ev)
+		RunNode(conf, base, ev)
 	}
 }
 
-func RunNode(node *RuleNode, ev *AuditEvent) {
+func RunNode(conf *ServerConfig, node *RuleNode, ev *AuditEvent) {
 
 	if node.action == SCRIPT {
 		// TODO Scripts
@@ -66,9 +81,20 @@ func RunNode(node *RuleNode, ev *AuditEvent) {
 
 	// Arriving here indicates no conditions failed
 
+	// run any triggers
+	switch node.trigger {
+	case LOG:
+		conf.eventLog.Printf("[%s] - %s\n", node.name, ev)
+	case ALERT:
+		conf.alertLog.Printf("[%s] - %s\n", node.name, ev)
+	case BOTH:
+		conf.eventLog.Printf("[%s] - %s\n", node.name, ev)
+		conf.alertLog.Printf("[%s] - %s\n", node.name, ev)
+	}
+
 	// recursively call all watching nodes
 	for _, n := range node.nodes {
-		RunNode(n, ev)
+		RunNode(conf, n, ev)
 	}
 }
 
@@ -173,6 +199,9 @@ func createMatchRule(conf *ini.Section) (*RuleNode, error) {
 		matches: make(map[string]*regexp.Regexp),
 	}
 
+	// setup rule triggers
+	addRuleTrigger(conf, rule)
+
 	// set the regex type
 	regexType := conf.Key("regextype").Value()
 	if regexType != "posix" {
@@ -209,4 +238,18 @@ func createMatchRule(conf *ini.Section) (*RuleNode, error) {
 func createScriptRule(conf *ini.Section) (*RuleNode, error) {
 	return nil, fmt.Errorf("Not implemented")
 	//TODO
+}
+
+func addRuleTrigger(conf *ini.Section, rule *RuleNode) {
+
+	if conf.HasKey("trigger") {
+		switch conf.Key("trigger").Value() {
+		case "log":
+			rule.trigger = LOG
+		case "alert":
+			rule.trigger = ALERT
+		case "both":
+			rule.trigger = BOTH
+		}
+	}
 }

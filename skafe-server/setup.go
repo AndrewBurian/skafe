@@ -55,12 +55,18 @@ func main() {
 	conf.serverLog.Println("SKAFE Server started!")
 	defer conf.serverLog.Println("SKAFE Server terminated.")
 
-	evChan := make(chan *AuditEvent, 32)
-	ruleChan := make(chan *AuditEvent, 32)
+	// setup the rule tree for the rule engine
+	baseRule, err := SetupRuleTree(conf)
+	if err != nil {
+		conf.serverLog.Fatalf("Error loading rule engine: ", err)
+	}
+
+	evChan := make(chan *AuditEvent)
+	ruleChan := make(chan *AuditEvent)
 
 	go ClientLink(conf, evChan)
 
-	go RuleEngine(conf, ruleChan)
+	go RuleEngine(conf, baseRule, ruleChan)
 
 	QueueEvents(conf, evChan, ruleChan)
 
