@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"github.com/go-ini/ini"
@@ -28,9 +29,8 @@ type ServerConfig struct {
 	port uint16
 
 	// TLS params
-	tls         bool
-	tlsCertPath string
-	tlsKeyPath  string
+	tls     bool
+	tlsConf *tls.Config
 }
 
 func main() {
@@ -112,6 +112,12 @@ func setupConfig(cfgPath string) (*ServerConfig, error) {
 		cfg.rulesDirPath = key.Value()
 	}
 
+	// setup TLS
+	err = setupTLS(cfg, defSec)
+	if err != nil {
+		return nil, err
+	}
+
 	return cfg, nil
 }
 
@@ -189,4 +195,46 @@ func setupStdioLogger(path string) (*log.Logger, error) {
 
 func setupSysLogger() (*log.Logger, error) {
 	return syslog.NewLogger(syslog.LOG_ALERT|syslog.LOG_DAEMON, 0)
+}
+
+func setupTLS(conf *ServerConfig, sect *ini.Section) error {
+
+	// if not specified, don't use TLS
+	if !sect.HasKey("tls") {
+		conf.tls = false
+		return nil
+	}
+
+	// get the bool value from the config
+	useTls, err := sect.Key("tls").Bool()
+	if err != nil {
+		return err
+	}
+
+	// if false, no tls
+	if !useTls {
+		conf.tls = false
+		return nil
+	}
+
+	// use TLS
+	conf.tlsConf = &tls.Config{}
+
+	// verify other params are set
+	if !sect.HasKey("tlscert") {
+		return fmt.Errorf("No tlscert specified in config")
+	}
+	if !sect.HasKey("tlskey") {
+		return fmt.Errorf("No tlskey specified in config")
+	}
+
+	// attempt to load keypair
+	cert, err := tls.LoadX509KeyPair(sect.Key("tlscert").Value(), sect.Key("tlskey").Value())
+	if err != nil {
+		return err
+	}
+
+	conf.tlsConf.Certificates = append(conf.tlsConf.Certificates, cert)
+
+	return nil
 }

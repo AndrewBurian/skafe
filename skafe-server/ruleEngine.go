@@ -59,7 +59,6 @@ func RuleEngineWorker(conf *ServerConfig, base *RuleNode, events <-chan *AuditEv
 
 func RunNode(conf *ServerConfig, node *RuleNode, ev *AuditEvent) {
 
-
 	if node.action == SCRIPT {
 		// TODO Scripts
 	}

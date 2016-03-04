@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/gob"
 	"fmt"
 	"net"
@@ -10,7 +11,15 @@ import (
 func ClientLink(conf *ServerConfig, incomingEvents chan<- *AuditEvent) {
 	listenStr := fmt.Sprintf(":%d", conf.port)
 
-	listenConn, err := net.Listen("tcp", listenStr)
+	var listenConn net.Listener
+	var err error
+
+	if conf.tls {
+		listenConn, err = tls.Listen("tcp", listenStr, conf.tlsConf)
+	} else {
+		listenConn, err = net.Listen("tcp", listenStr)
+	}
+
 	if err != nil {
 		panic(err)
 	}
