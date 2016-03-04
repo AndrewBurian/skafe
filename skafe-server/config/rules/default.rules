@@ -1,6 +1,7 @@
 [MatchRule]
 action = match
 regextype = posix
+trigger = log
 
 [ScriptRule]
 action = script
@@ -8,3 +9,16 @@ action = script
 [MatchRule.test]
 watch = base
 match_key = execve
+
+[MatchRule.test2]
+watch = base
+match_key = file
+
+[MatchRule.test3]
+watch = MatchRule.test
+match_key = exec[a-z]+
+
+[MatchRule.test4]
+watch = MatchRule.test
+match_key = ex
+match_data = llama

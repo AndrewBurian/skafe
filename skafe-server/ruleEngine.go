@@ -32,6 +32,8 @@ type RuleNode struct {
 
 func RuleEngine(conf *ServerConfig, base *RuleNode, events <-chan *AuditEvent) {
 
+	conf.serverLog.Println("Rule Engine started")
+
 	// the channel to dispatch events to workers over
 	workers := make(chan *AuditEvent)
 
@@ -56,6 +58,7 @@ func RuleEngineWorker(conf *ServerConfig, base *RuleNode, events <-chan *AuditEv
 }
 
 func RunNode(conf *ServerConfig, node *RuleNode, ev *AuditEvent) {
+
 
 	if node.action == SCRIPT {
 		// TODO Scripts
@@ -84,12 +87,12 @@ func RunNode(conf *ServerConfig, node *RuleNode, ev *AuditEvent) {
 	// run any triggers
 	switch node.trigger {
 	case LOG:
-		conf.eventLog.Printf("[%s] - %s\n", node.name, ev)
+		conf.eventLog.Printf("[%s] - %s\n", node.name, *ev)
 	case ALERT:
-		conf.alertLog.Printf("[%s] - %s\n", node.name, ev)
+		conf.alertLog.Printf("[%s] - %s\n", node.name, *ev)
 	case BOTH:
-		conf.eventLog.Printf("[%s] - %s\n", node.name, ev)
-		conf.alertLog.Printf("[%s] - %s\n", node.name, ev)
+		conf.eventLog.Printf("[%s] - %s\n", node.name, *ev)
+		conf.alertLog.Printf("[%s] - %s\n", node.name, *ev)
 	}
 
 	// recursively call all watching nodes
