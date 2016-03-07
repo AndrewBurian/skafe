@@ -1,0 +1,2 @@
+V	170307204032Z		01	unknown	/C=CA/ST=BC/L=Vancouver/O=SKAFE Demo Agent/CN=demo.agent.local
+V	170307204746Z		02	unknown	/C=CA/ST=BC/L=Vancouver/O=SKAFE Demo Server/CN=demo.server.local
