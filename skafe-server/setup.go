@@ -29,8 +29,10 @@ type ServerConfig struct {
 	port uint16
 
 	// TLS params
-	tls     bool
-	tlsConf *tls.Config
+	tls         bool
+	tlsConf     *tls.Config
+	tlsKeyPath  string
+	tlsCertPath string
 }
 
 func main() {
@@ -50,6 +52,12 @@ func main() {
 	err = setupLoggers(conf)
 	if err != nil {
 		log.Fatalf("Unable to set up log files: %s\n", err.Error())
+	}
+
+	// setup TLS
+	err = setupTLS(conf)
+	if err != nil {
+		log.Fatalf("Unable to set up TLS: %s\n", err.Error())
 	}
 
 	conf.serverLog.Println("SKAFE Server started!")
@@ -112,10 +120,33 @@ func setupConfig(cfgPath string) (*ServerConfig, error) {
 		cfg.rulesDirPath = key.Value()
 	}
 
-	// setup TLS
-	err = setupTLS(cfg, defSec)
-	if err != nil {
-		return nil, err
+	// if not specified, don't use TLS
+	if !defSec.HasKey("tls") {
+		cfg.tls = false
+	} else {
+
+		// get the bool value from the config
+		useTls, err := defSec.Key("tls").Bool()
+		if err != nil {
+			return nil, err
+		}
+
+		// if false, no tls
+		if !useTls {
+			cfg.tls = false
+		} else {
+
+			// verify other params are set
+			if !defSec.HasKey("tlscert") {
+				return nil, fmt.Errorf("No tlscert specified in config")
+			}
+			if !defSec.HasKey("tlskey") {
+				return nil, fmt.Errorf("No tlskey specified in config")
+			}
+
+			cfg.tlsCertPath = defSec.Key("tlscert").Value()
+			cfg.tlsKeyPath = defSec.Key("tlskey").Value()
+		}
 	}
 
 	return cfg, nil
@@ -197,42 +228,19 @@ func setupSysLogger() (*log.Logger, error) {
 	return syslog.NewLogger(syslog.LOG_ALERT|syslog.LOG_DAEMON, 0)
 }
 
-func setupTLS(conf *ServerConfig, sect *ini.Section) error {
+func setupTLS(conf *ServerConfig) error {
 
-	// if not specified, don't use TLS
-	if !sect.HasKey("tls") {
-		conf.tls = false
+	if !conf.tls {
 		return nil
-	}
-
-	// get the bool value from the config
-	useTls, err := sect.Key("tls").Bool()
-	if err != nil {
-		return err
-	}
-
-	// if false, no tls
-	if !useTls {
-		conf.tls = false
-		return nil
-	}
-
-	// use TLS
-	conf.tlsConf = &tls.Config{}
-
-	// verify other params are set
-	if !sect.HasKey("tlscert") {
-		return fmt.Errorf("No tlscert specified in config")
-	}
-	if !sect.HasKey("tlskey") {
-		return fmt.Errorf("No tlskey specified in config")
 	}
 
 	// attempt to load keypair
-	cert, err := tls.LoadX509KeyPair(sect.Key("tlscert").Value(), sect.Key("tlskey").Value())
+	cert, err := tls.LoadX509KeyPair(conf.tlsCertPath, conf.tlsKeyPath)
 	if err != nil {
 		return err
 	}
+
+	conf.tlsConf = &tls.Config{}
 
 	conf.tlsConf.Certificates = append(conf.tlsConf.Certificates, cert)
 
