@@ -101,11 +101,39 @@ func TestFileLoggerSetup(t *testing.T) {
 	t.Skip("Syslog can't fail, will panic instead")
 }
 
-func TestStdioLogger(t *testing.T) {
-	// this test cannot fail
-	t.Skip("Stdio loggers can't fail")
+func TestStdioLoggerNonsense(t *testing.T) {
+	_, err := setupStdioLogger("llama")
+	if err == nil {
+		t.Errorf("No error returned where one should have been")
+	}
 }
 
+func TestSetupLoggersFailServer(t *testing.T) {
+	conf, err := setupConfig("tests/loggers_fail_server.conf")
+	checkErr(nil, err, t)
+	err = setupLoggers(conf)
+	if err == nil {
+		t.Errorf("No error returned where one should have been")
+	}
+}
+
+func TestSetupLoggersFailEvent(t *testing.T) {
+	conf, err := setupConfig("tests/loggers_fail_event.conf")
+	checkErr(nil, err, t)
+	err = setupLoggers(conf)
+	if err == nil {
+		t.Errorf("No error returned where one should have been")
+	}
+}
+
+func TestSetupLoggersFailAlert(t *testing.T) {
+	conf, err := setupConfig("tests/loggers_fail_alert.conf")
+	checkErr(nil, err, t)
+	err = setupLoggers(conf)
+	if err == nil {
+		t.Errorf("No error returned where one should have been")
+	}
+}
 func TestSetupConfigFail(t *testing.T) {
 	_, err := setupConfig("/dev/null/impossible/gooby/y/u/do.conf")
 	if err == nil {
