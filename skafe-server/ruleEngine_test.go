@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/go-ini/ini"
 	"log"
 	"regexp"
 	"testing"
@@ -182,7 +183,7 @@ func TestRecursiveMatch(t *testing.T) {
 		},
 		nodes: []*RuleNode{
 			&RuleNode{
-				name:   "second",
+				name:    "second",
 				trigger: LOG,
 				action:  MATCH,
 				matches: map[string]*regexp.Regexp{
@@ -206,5 +207,77 @@ func TestRecursiveMatch(t *testing.T) {
 
 	if counter.Count != 2 {
 		t.Errorf("Node did not trigger correct logs\nExpecting [2]\nGot [%d]", counter.Count)
+	}
+}
+
+func TestCreateMatchRuleGoodSingleEvent(t *testing.T) {
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		trigger = log
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	rule, err := createMatchRule(file.Section("Rule"))
+	checkErr(nil, err, t)
+
+	if rule.name != "Rule" {
+		t.Errorf("Rule name incorrect\nExpected [Rule]\nGot [%s]", rule.name)
+	}
+	if rule.trigger != LOG {
+		t.Errorf("Rule received wrong trigger")
+	}
+
+	regex, ok := rule.matches["key"]
+
+	if !ok {
+		t.Errorf("Rule failed to get match key")
+	}
+	if regex == nil {
+		t.Errorf("Failed to compile match regex")
+	}
+	if !regex.MatchString("val") {
+		t.Errorf("Regex not working as intended. Missing match")
+	}
+	if regex.MatchString("other val") {
+		t.Errorf("Regex not working as intended. Unexpected match")
+	}
+}
+
+func TestCreateMatchRuleGoodSingleAlert(t *testing.T) {
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		trigger = alert
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	rule, err := createMatchRule(file.Section("Rule"))
+	checkErr(nil, err, t)
+
+	if rule.name != "Rule" {
+		t.Errorf("Rule name incorrect\nExpected [Rule]\nGot [%s]", rule.name)
+	}
+	if rule.trigger != ALERT {
+		t.Errorf("Rule received wrong trigger")
+	}
+
+	regex, ok := rule.matches["key"]
+
+	if !ok {
+		t.Errorf("Rule failed to get match key")
+	}
+	if regex == nil {
+		t.Errorf("Failed to compile match regex")
+	}
+	if !regex.MatchString("val") {
+		t.Errorf("Regex not working as intended. Missing match")
+	}
+	if regex.MatchString("other val") {
+		t.Errorf("Regex not working as intended. Unexpected match")
 	}
 }

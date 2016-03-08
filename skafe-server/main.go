@@ -33,8 +33,14 @@ func main() {
 	conf.serverLog.Println("SKAFE Server started!")
 	defer conf.serverLog.Println("SKAFE Server terminated.")
 
+	// load rule tree conifg
+	ruleConf, err := SetupRuleTreeConfig(conf)
+	if err != nil {
+		log.Fatalf("Unable to load rule tree config: %s\n", err.Error())
+	}
+
 	// setup the rule tree for the rule engine
-	baseRule, err := SetupRuleTree(conf)
+	baseRule, err := SetupRuleTree(conf, ruleConf)
 	if err != nil {
 		conf.serverLog.Fatalf("Error loading rule engine: ", err)
 	}

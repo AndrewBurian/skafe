@@ -100,12 +100,7 @@ func RunNode(conf *ServerConfig, node *RuleNode, ev *AuditEvent) {
 	}
 }
 
-func SetupRuleTree(conf *ServerConfig) (*RuleNode, error) {
-
-	// Create the base rule. A matching rule with no matches will match all
-	baseNode := &RuleNode{
-		action: MATCH,
-	}
+func SetupRuleTreeConfig(conf *ServerConfig) (*ini.File, error) {
 
 	// get all files in the rules directory
 	fileInfos, err := ioutil.ReadDir(conf.rulesDirPath)
@@ -131,6 +126,16 @@ func SetupRuleTree(conf *ServerConfig) (*RuleNode, error) {
 		}
 	}
 
+	return rulesConf, nil
+}
+
+func SetupRuleTree(conf *ServerConfig, rulesConf *ini.File) (*RuleNode, error) {
+
+	// Create the base rule. A matching rule with no matches will match all
+	baseNode := &RuleNode{
+		action: MATCH,
+	}
+
 	// create a map for storing the rules
 	ruleTree := make(map[string]*RuleNode)
 	ruleTree["base"] = baseNode
@@ -138,59 +143,70 @@ func SetupRuleTree(conf *ServerConfig) (*RuleNode, error) {
 	// for each rule section
 	for _, rule := range rulesConf.Sections() {
 
-		// skip the default section
-		if rule.Name() == ini.DEFAULT_SECTION {
-			continue
-		}
-
-		// skip any rule that doesn't watch anything
-		if !rule.HasKey("watch") {
-			conf.serverLog.Printf("Rule [%s] has no watch, skipping", rule.Name())
-			continue
-		}
-
-		// check to ensure the watched rule exists
-		if _, ok := ruleTree[rule.Key("watch").Value()]; !ok {
-			conf.serverLog.Printf("Rule [%s] watching non-existant rule [%s], skipping", rule.Name(), rule.Key("watch").Value())
-			continue
-		}
-
-		// skip any rule with no action
-		if !rule.HasKey("action") {
-			conf.serverLog.Printf("Rule [%s] has no action, skipping", rule.Name())
-			continue
-		}
-
-		// create the rule
-		var newRule *RuleNode
-		var err error
-
-		if rule.Key("action").Value() == "match" {
-
-			newRule, err = createMatchRule(rule)
-
-		} else if rule.Key("action").Value() == "script" {
-
-			newRule, err = createScriptRule(rule)
-
-		}
-
-		// check if the rule created sucessfully
+		err := createRule(rule, conf, ruleTree)
 		if err != nil {
-			conf.serverLog.Printf("Failed to create rule [%s]: %s", rule.Name(), err.Error())
 			return nil, err
 		}
-
-		// register it to watch the target rule
-		watchedRule := ruleTree[newRule.watch]
-		watchedRule.nodes = append(watchedRule.nodes, newRule)
-
-		// add this rule to the tree
-		ruleTree[newRule.name] = newRule
 
 	}
 
 	return baseNode, nil
+}
+
+func createRule(rule *ini.Section, conf *ServerConfig, ruleTree map[string]*RuleNode) error {
+
+	// skip the default section
+	if rule.Name() == ini.DEFAULT_SECTION {
+		return nil
+	}
+
+	// skip any rule that doesn't watch anything
+	if !rule.HasKey("watch") {
+		conf.serverLog.Printf("Rule [%s] has no watch, skipping", rule.Name())
+		return nil
+	}
+
+	// check to ensure the watched rule exists
+	if _, ok := ruleTree[rule.Key("watch").Value()]; !ok {
+		conf.serverLog.Printf("Rule [%s] watching non-existant rule [%s], skipping", rule.Name(), rule.Key("watch").Value())
+		return nil
+	}
+
+	// skip any rule with no action
+	if !rule.HasKey("action") {
+		conf.serverLog.Printf("Rule [%s] has no action, skipping", rule.Name())
+		return nil
+	}
+
+	// create the rule
+	var newRule *RuleNode
+	var err error
+
+	if rule.Key("action").Value() == "match" {
+
+		newRule, err = createMatchRule(rule)
+
+	} else if rule.Key("action").Value() == "script" {
+
+		newRule, err = createScriptRule(rule)
+
+	}
+
+	// check if the rule created sucessfully
+	if err != nil {
+		conf.serverLog.Printf("Failed to create rule [%s]: %s", rule.Name(), err.Error())
+		return err
+	}
+
+	// register it to watch the target rule
+	watchedRule := ruleTree[newRule.watch]
+	watchedRule.nodes = append(watchedRule.nodes, newRule)
+
+	// add this rule to the tree
+	ruleTree[newRule.name] = newRule
+
+	return nil
+
 }
 
 func createMatchRule(conf *ini.Section) (*RuleNode, error) {
