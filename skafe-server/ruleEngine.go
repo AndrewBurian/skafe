@@ -224,9 +224,6 @@ func createMatchRule(conf *ini.Section) (*RuleNode, error) {
 
 	// set the regex type
 	regexType := conf.Key("regextype").Value()
-	if regexType != "posix" {
-		regexType = "perl"
-	}
 
 	for _, key := range conf.Keys() {
 

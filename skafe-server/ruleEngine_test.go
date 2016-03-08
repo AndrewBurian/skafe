@@ -281,3 +281,157 @@ func TestCreateMatchRuleGoodSingleAlert(t *testing.T) {
 		t.Errorf("Regex not working as intended. Unexpected match")
 	}
 }
+
+func TestCreateMatchRuleGoodSingleBoth(t *testing.T) {
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		trigger = both
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	rule, err := createMatchRule(file.Section("Rule"))
+	checkErr(nil, err, t)
+
+	if rule.name != "Rule" {
+		t.Errorf("Rule name incorrect\nExpected [Rule]\nGot [%s]", rule.name)
+	}
+	if rule.trigger != BOTH {
+		t.Errorf("Rule received wrong trigger")
+	}
+
+	regex, ok := rule.matches["key"]
+
+	if !ok {
+		t.Errorf("Rule failed to get match key")
+	}
+	if regex == nil {
+		t.Errorf("Failed to compile match regex")
+	}
+	if !regex.MatchString("val") {
+		t.Errorf("Regex not working as intended. Missing match")
+	}
+	if regex.MatchString("other val") {
+		t.Errorf("Regex not working as intended. Unexpected match")
+	}
+}
+
+func TestCreateMatchRuleBadTrigger(t *testing.T) {
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		trigger = llama
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	_, err = createMatchRule(file.Section("Rule"))
+	if err == nil {
+		t.Errorf("No error was returned where one should have been")
+	}
+}
+
+func TestCreateMatchRuleBadRegexType(t *testing.T) {
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		trigger = log
+		regextype = llama
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	_, err = createMatchRule(file.Section("Rule"))
+	if err == nil {
+		t.Errorf("No error was returned where one should have been")
+	}
+}
+
+func TestCreateMatchRuleBadRegex(t *testing.T) {
+	file, err := ini.Load([]byte(`
+		[Rule]
+		trigger = log
+		regextype = posix
+		match_key = [a-z+
+	`))
+	checkErr(nil, err, t)
+
+	_, err = createMatchRule(file.Section("Rule"))
+	if err == nil {
+		t.Errorf("No error was returned where one should have been")
+	}
+}
+
+
+func TestRulesConfInvalidDir(t *testing.T) {
+	conf := &ServerConfig {
+		rulesDirPath: "/dev/null/broken",
+	}
+
+	_, err := SetupRuleTreeConfig(conf)
+	if err == nil {
+		t.Errorf("No error returned where one should have been")
+	}
+}
+
+func TestRulesConfCountRules(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	conf := &ServerConfig{
+		serverLog: logger,
+		rulesDirPath: "tests/rulesets/rules_empty",
+	}
+
+	_, err := SetupRuleTreeConfig(conf)
+	checkErr(nil, err, t)
+
+	if counter.Count != 5 {
+		t.Errorf("Wrong number of rule files loaded\nExpected [5]\nGot [%d]", counter.Count)
+	}
+}
+
+func TestRulesConfIgnoreOther(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	conf := &ServerConfig{
+		serverLog: logger,
+		rulesDirPath: "tests/rulesets/rules_others",
+	}
+
+	_, err := SetupRuleTreeConfig(conf)
+	checkErr(nil, err, t)
+
+	if counter.Count != 3 {
+		t.Errorf("Wrong number of rule files loaded\nExpected [3]\nGot [%d]", counter.Count)
+	}
+}
+
+func TestRulesConfPermissionErr(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	conf := &ServerConfig{
+		serverLog: logger,
+		rulesDirPath: "tests/rulesets/rules_permission",
+	}
+
+	_, err := SetupRuleTreeConfig(conf)
+
+	if err == nil {
+		t.Errorf("No error returned where one was expected")
+	}
+}
