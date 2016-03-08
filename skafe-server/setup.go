@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/tls"
-	"flag"
 	"fmt"
 	"github.com/go-ini/ini"
 	"log"
@@ -35,50 +34,10 @@ type ServerConfig struct {
 	tlsCertPath string
 }
 
-func main() {
-
-	// flag for specifying a non-default config directory
-	flagConfFile := flag.String("conf", "/etc/skafe/skafe-server.conf", "Set the directory containing config and rules")
-
-	flag.Parse()
-
-	// Setup server configuration
-	conf, err := setupConfig(*flagConfFile)
-	if err != nil {
-		log.Fatalf("Unable to setup server config: %s\n", err.Error())
-	}
-
-	// Setup loggers
-	err = setupLoggers(conf)
-	if err != nil {
-		log.Fatalf("Unable to set up log files: %s\n", err.Error())
-	}
-
-	// setup TLS
-	err = setupTLS(conf)
-	if err != nil {
-		log.Fatalf("Unable to set up TLS: %s\n", err.Error())
-	}
-
-	conf.serverLog.Println("SKAFE Server started!")
-	defer conf.serverLog.Println("SKAFE Server terminated.")
-
-	// setup the rule tree for the rule engine
-	baseRule, err := SetupRuleTree(conf)
-	if err != nil {
-		conf.serverLog.Fatalf("Error loading rule engine: ", err)
-	}
-
-	evChan := make(chan *AuditEvent)
-	ruleChan := make(chan *AuditEvent)
-
-	go ClientLink(conf, evChan)
-
-	go RuleEngine(conf, baseRule, ruleChan)
-
-	QueueEvents(conf, evChan, ruleChan)
-
-}
+var (
+	errTlsMissingCert error = fmt.Errorf("Missing tlscert entry in config")
+	errTlsMissingKey  error = fmt.Errorf("Missing tlskey entry in config")
+)
 
 func setupConfig(cfgPath string) (*ServerConfig, error) {
 
@@ -136,12 +95,14 @@ func setupConfig(cfgPath string) (*ServerConfig, error) {
 			cfg.tls = false
 		} else {
 
+			cfg.tls = true
+
 			// verify other params are set
 			if !defSec.HasKey("tlscert") {
-				return nil, fmt.Errorf("No tlscert specified in config")
+				return nil, errTlsMissingCert
 			}
 			if !defSec.HasKey("tlskey") {
-				return nil, fmt.Errorf("No tlskey specified in config")
+				return nil, errTlsMissingKey
 			}
 
 			cfg.tlsCertPath = defSec.Key("tlscert").Value()

@@ -5,3 +5,4 @@ skafe-server/skafe-server
 *.test
 !*.json
 *.swp
+*.log
