@@ -182,13 +182,13 @@ func createRule(rule *ini.Section, conf *ServerConfig, ruleTree map[string]*Rule
 	var newRule *RuleNode
 	var err error
 
-	if rule.Key("action").Value() == "match" {
-
+	switch rule.Key("action").Value() {
+	case "match":
 		newRule, err = createMatchRule(rule)
-
-	} else if rule.Key("action").Value() == "script" {
-
+	case "script":
 		newRule, err = createScriptRule(rule)
+	default:
+		return fmt.Errorf("Rule [%s] has invalid action: %s", rule.Name(), rule, rule.Key("action").Value())
 
 	}
 

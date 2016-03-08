@@ -365,9 +365,8 @@ func TestCreateMatchRuleBadRegex(t *testing.T) {
 	}
 }
 
-
 func TestRulesConfInvalidDir(t *testing.T) {
-	conf := &ServerConfig {
+	conf := &ServerConfig{
 		rulesDirPath: "/dev/null/broken",
 	}
 
@@ -385,7 +384,7 @@ func TestRulesConfCountRules(t *testing.T) {
 	logger := log.New(counter, "", 0)
 
 	conf := &ServerConfig{
-		serverLog: logger,
+		serverLog:    logger,
 		rulesDirPath: "tests/rulesets/rules_empty",
 	}
 
@@ -405,7 +404,7 @@ func TestRulesConfIgnoreOther(t *testing.T) {
 	logger := log.New(counter, "", 0)
 
 	conf := &ServerConfig{
-		serverLog: logger,
+		serverLog:    logger,
 		rulesDirPath: "tests/rulesets/rules_others",
 	}
 
@@ -425,7 +424,7 @@ func TestRulesConfPermissionErr(t *testing.T) {
 	logger := log.New(counter, "", 0)
 
 	conf := &ServerConfig{
-		serverLog: logger,
+		serverLog:    logger,
 		rulesDirPath: "tests/rulesets/rules_permission",
 	}
 
@@ -433,5 +432,247 @@ func TestRulesConfPermissionErr(t *testing.T) {
 
 	if err == nil {
 		t.Errorf("No error returned where one was expected")
+	}
+}
+
+func TestCreateRuleSkipDefault(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	conf := &ServerConfig{
+		serverLog: logger,
+	}
+
+	ruleTree := map[string]*RuleNode{
+		"base": &RuleNode{},
+	}
+
+	file, err := ini.Load([]byte(`
+		watch = base
+		action = match
+		trigger = llama
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	err = createRule(file.Section(""), conf, ruleTree)
+	checkErr(nil, err, t)
+
+	if counter.Count != 0 {
+		t.Errorf("Something else happened")
+	}
+}
+
+func TestCreateRuleSkipNoWatch(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	conf := &ServerConfig{
+		serverLog: logger,
+	}
+
+	ruleTree := map[string]*RuleNode{
+		"base": &RuleNode{},
+	}
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		action = match
+		trigger = log
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	err = createRule(file.Section("Rule"), conf, ruleTree)
+	checkErr(nil, err, t)
+
+	if counter.Count != 1 {
+		t.Errorf("Rule not skipped")
+	}
+}
+
+func TestCreateRuleSkipNoParent(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	conf := &ServerConfig{
+		serverLog: logger,
+	}
+
+	ruleTree := map[string]*RuleNode{
+		"base": &RuleNode{},
+	}
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		action = match
+		watch = llama
+		trigger = log
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	err = createRule(file.Section("Rule"), conf, ruleTree)
+	checkErr(nil, err, t)
+
+	if counter.Count != 1 {
+		t.Errorf("Rule not skipped")
+	}
+}
+
+func TestCreateRuleSkipNoAction(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	conf := &ServerConfig{
+		serverLog: logger,
+	}
+
+	ruleTree := map[string]*RuleNode{
+		"base": &RuleNode{},
+	}
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		watch = base
+		trigger = log
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	err = createRule(file.Section("Rule"), conf, ruleTree)
+	checkErr(nil, err, t)
+
+	if counter.Count != 1 {
+		t.Errorf("Rule not skipped")
+	}
+}
+
+func TestCreateRuleBadAction(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	conf := &ServerConfig{
+		serverLog: logger,
+	}
+
+	ruleTree := map[string]*RuleNode{
+		"base": &RuleNode{},
+	}
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		action = llama
+		watch = base
+		trigger = log
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	err = createRule(file.Section("Rule"), conf, ruleTree)
+	if err == nil {
+		t.Errorf("No error returned where one was expected")
+	}
+}
+
+func TestCreateRuleMatch(t *testing.T) {
+
+	ruleTree := map[string]*RuleNode{
+		"base": &RuleNode{},
+	}
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		action = match
+		watch = base
+		trigger = log
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	err = createRule(file.Section("Rule"), nil, ruleTree)
+	checkErr(nil, err, t)
+
+	rule, ok := ruleTree["Rule"]
+	if !ok {
+		t.Errorf("Rule failed to get added to tree")
+	}
+
+	if ruleTree["base"].nodes[0] != rule {
+		t.Errorf("Rule not registerd with base")
+	}
+
+	if rule.action != MATCH {
+		t.Errorf("Rule got assigned wrong action")
+	}
+
+	if rule.trigger != LOG {
+		t.Errorf("Rule got assigned wrong trigger")
+	}
+
+}
+
+func TestSetupRuleTreePass(t *testing.T) {
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		action = match
+		watch = base
+		trigger = log
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	base, err := SetupRuleTree(nil, file)
+	checkErr(nil, err, t)
+
+	if base == nil {
+		t.Errorf("Base node retruned as nil")
+	}
+
+	if len(base.nodes) != 1 {
+		t.Errorf("Child nodes not created")
+	}
+
+}
+
+func TestSetupRuleTreeFail(t *testing.T) {
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		action = match
+		watch = base
+		trigger = log
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	base, err := SetupRuleTree(nil, file)
+
+	if err == nil || base != nil {
+		t.Errorf("No error returned or base node initialized when it shouldn't have been")
 	}
 }
