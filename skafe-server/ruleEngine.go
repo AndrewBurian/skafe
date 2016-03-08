@@ -202,7 +202,9 @@ func createMatchRule(conf *ini.Section) (*RuleNode, error) {
 	}
 
 	// setup rule triggers
-	addRuleTrigger(conf, rule)
+	if err := addRuleTrigger(conf, rule); err != nil {
+		return nil, err
+	}
 
 	// set the regex type
 	regexType := conf.Key("regextype").Value()
@@ -220,10 +222,13 @@ func createMatchRule(conf *ini.Section) (*RuleNode, error) {
 		var regex *regexp.Regexp
 		var err error
 
-		if regexType == "posix" {
+		switch regexType {
+		case "posix":
 			regex, err = regexp.CompilePOSIX(key.Value())
-		} else {
+		case "default", "perl", "normal":
 			regex, err = regexp.Compile(key.Value())
+		default:
+			return nil, fmt.Errorf("Unknown regex type %s", regexType)
 		}
 
 		if err != nil {
@@ -242,7 +247,7 @@ func createScriptRule(conf *ini.Section) (*RuleNode, error) {
 	//TODO
 }
 
-func addRuleTrigger(conf *ini.Section, rule *RuleNode) {
+func addRuleTrigger(conf *ini.Section, rule *RuleNode) error {
 
 	if conf.HasKey("trigger") {
 		switch conf.Key("trigger").Value() {
@@ -252,6 +257,9 @@ func addRuleTrigger(conf *ini.Section, rule *RuleNode) {
 			rule.trigger = ALERT
 		case "both":
 			rule.trigger = BOTH
+		default:
+			return fmt.Errorf("Unknown trigger type %s", conf.Key("trigger").Value())
 		}
 	}
+	return nil
 }

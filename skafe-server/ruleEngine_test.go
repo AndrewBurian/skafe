@@ -1,66 +1,103 @@
 package main
 
 import (
+	"log"
 	"testing"
-	"time"
 )
 
-func TestRuleTreeSetup(t *testing.T) {
+type LogCounter struct {
+	Count int
+	t     *testing.T
+}
 
-	conf, err := setupConfig("config/skafe-server.conf")
-	if err != nil {
-		t.Fatal(err)
+func (l *LogCounter) Write(b []byte) (int, error) {
+	l.Count += 1
+	l.t.Log(string(b))
+	return len(b), nil
+}
+
+func TestMatchNodeBlank(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	node := &RuleNode{
+		trigger: LOG,
+		action:  MATCH,
 	}
 
-	err = setupLoggers(conf)
-	if err != nil {
-		t.Fatal(err)
+	conf := &ServerConfig{
+		eventLog: logger,
 	}
 
-	_, err = SetupRuleTree(conf)
+	event := &AuditEvent{
+		"key": "val",
+	}
 
-	if err != nil {
-		t.Fatal(err.Error())
+	RunNode(conf, node, event)
+
+	if counter.Count != 1 {
+		t.Errorf("Node did not trigger correct logs\nExpecting [1]\nGot [%d]", counter.Count)
 	}
 }
 
-func TestRunRules(t *testing.T) {
+func TestMatchNodeBlankBoth(t *testing.T) {
+	eventCounter := &LogCounter{
+		t: t,
+	}
+	alertCounter := &LogCounter{t: t}
 
-	flagConfFile := string("./config/skafe-server.conf")
+	eventLogger := log.New(eventCounter, "", 0)
+	alertLogger := log.New(alertCounter, "", 0)
 
-	// Setup server configuration
-	conf, err := setupConfig(flagConfFile)
-	if err != nil {
-		t.Fatalf("Unable to setup server config: %s\n", err.Error())
+	node := &RuleNode{
+		trigger: BOTH,
+		action:  MATCH,
 	}
 
-	// Setup loggers
-	err = setupLoggers(conf)
-	if err != nil {
-		t.Fatalf("Unable to set up log files: %s\n", err.Error())
+	conf := &ServerConfig{
+		eventLog: eventLogger,
+		alertLog: alertLogger,
 	}
 
-	conf.serverLog.Println("SKAFE Server started!")
-	defer conf.serverLog.Println("SKAFE Server terminated.")
-
-	// setup the rule tree for the rule engine
-	baseRule, err := SetupRuleTree(conf)
-	if err != nil {
-		conf.serverLog.Fatalf("Error loading rule engine: ", err)
-		t.FailNow()
+	event := &AuditEvent{
+		"key": "val",
 	}
 
-	ruleChan := make(chan *AuditEvent)
+	RunNode(conf, node, event)
 
-	go RuleEngine(conf, baseRule, ruleChan)
+	if eventCounter.Count != 1 {
+		t.Errorf("Node did not trigger correct event logs\nExpecting [1]\nGot [%d]", eventCounter.Count)
+	}
+	if alertCounter.Count != 1 {
+		t.Errorf("Node did not trigger correct alert logs\nExpecting [1]\nGot [%d]", alertCounter.Count)
+	}
+}
 
-	ruleChan <- &AuditEvent{
-		"key":  "execve",
-		"data": "testData",
-		"cmd":  "cat /etc/shadow",
+func TestMatchNodeBlankAlert(t *testing.T) {
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	node := &RuleNode{
+		trigger: ALERT,
+		action:  MATCH,
 	}
 
-	close(ruleChan)
-	time.Sleep(3 * time.Second)
+	conf := &ServerConfig{
+		alertLog: logger,
+	}
 
+	event := &AuditEvent{
+		"key": "val",
+	}
+
+	RunNode(conf, node, event)
+
+	if counter.Count != 1 {
+		t.Errorf("Node did not trigger correct logs\nExpecting [1]\nGot [%d]", counter.Count)
+	}
 }
