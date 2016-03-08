@@ -595,6 +595,38 @@ func TestCreateRuleBadAction(t *testing.T) {
 	}
 }
 
+
+func TestCreateRuleBadTrigger(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	conf := &ServerConfig{
+		serverLog: logger,
+	}
+
+	ruleTree := map[string]*RuleNode{
+		"base": &RuleNode{},
+	}
+
+	file, err := ini.Load([]byte(`
+		[Rule]
+		action = match
+		watch = base
+		trigger = llama
+		regextype = perl
+		match_key = ^val$
+	`))
+	checkErr(nil, err, t)
+
+	err = createRule(file.Section("Rule"), conf, ruleTree)
+	if err == nil {
+		t.Errorf("No error returned where one was expected")
+	}
+}
+
 func TestCreateRuleMatch(t *testing.T) {
 
 	ruleTree := map[string]*RuleNode{
@@ -662,7 +694,7 @@ func TestSetupRuleTreeFail(t *testing.T) {
 
 	file, err := ini.Load([]byte(`
 		[Rule]
-		action = match
+		action = llama
 		watch = base
 		trigger = log
 		regextype = perl
