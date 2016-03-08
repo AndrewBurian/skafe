@@ -138,35 +138,23 @@ func TestTlsSetupWithDisabled(t *testing.T) {
 }
 
 func TestStdoutLoggers(t *testing.T) {
-	conf := &ServerConfig{
-		serverLogPath: "stdout",
-		alertLogPath:  "stdout",
-		eventLogPath:  "stdout",
-	}
-
-	err := setupLoggers(conf)
+	conf, err := setupConfig("tests/loggers_stdout.conf")
+	checkErr(nil, err, t)
+	err = setupLoggers(conf)
 	checkErr(nil, err, t)
 }
 
 func TestStderrLoggers(t *testing.T) {
-	conf := &ServerConfig{
-		serverLogPath: "stderr",
-		alertLogPath:  "stderr",
-		eventLogPath:  "stderr",
-	}
-
-	err := setupLoggers(conf)
+	conf, err := setupConfig("tests/loggers_stderr.conf")
+	checkErr(nil, err, t)
+	err = setupLoggers(conf)
 	checkErr(nil, err, t)
 }
 
 func TestSysLoggers(t *testing.T) {
-	conf := &ServerConfig{
-		serverLogPath: "syslog",
-		alertLogPath:  "syslog",
-		eventLogPath:  "syslog",
-	}
-
-	err := setupLoggers(conf)
+	conf, err := setupConfig("tests/loggers_syslog.conf")
+	checkErr(nil, err, t)
+	err = setupLoggers(conf)
 	checkErr(nil, err, t)
 }
 
@@ -179,4 +167,34 @@ func TestFileLoggers(t *testing.T) {
 
 	err := setupLoggers(conf)
 	checkErr(nil, err, t)
+}
+
+func TestListenPortDefault(t *testing.T) {
+	conf, err := setupConfig("tests/blank.conf")
+	checkErr(nil, err, t)
+	if conf.port != DEFAULT_PORT {
+		t.Errorf("Default port expected\nGot port [%d]", conf.port)
+	}
+}
+
+func TestListenPortSet(t *testing.T) {
+	conf, err := setupConfig("tests/port.conf")
+	checkErr(nil, err, t)
+	if conf.port != 6666 {
+		t.Errorf("Got incorrect listen port.\nExpected [%d]\nGot [%d]", 6666, conf.port)
+	}
+}
+
+func TestListenPortTooHigh(t *testing.T) {
+	_, err := setupConfig("tests/port_high.conf")
+	if err == nil {
+		t.Errorf("No error returned where one was expected")
+	}
+}
+
+func TestListenPortNan(t *testing.T) {
+	_, err := setupConfig("tests/port_nan.conf")
+	if err == nil {
+		t.Errorf("No error returned where one was expected")
+	}
 }

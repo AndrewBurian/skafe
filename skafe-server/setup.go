@@ -49,7 +49,7 @@ func setupConfig(cfgPath string) (*ServerConfig, error) {
 
 		rulesDirPath: "/etc/skafe/rules",
 
-		port: uint16(6969),
+		port: uint16(DEFAULT_PORT),
 
 		tls: false,
 	}
@@ -77,6 +77,19 @@ func setupConfig(cfgPath string) (*ServerConfig, error) {
 
 	if key, err := defSec.GetKey("rulesdir"); err == nil {
 		cfg.rulesDirPath = key.Value()
+	}
+
+	if defSec.HasKey("port") {
+		port, err := defSec.Key("port").Uint()
+		if err != nil {
+			return nil, err
+		}
+
+		if port > 65534 {
+			return nil, fmt.Errorf("Port out of range")
+		}
+
+		cfg.port = uint16(port)
 	}
 
 	// if not specified, don't use TLS

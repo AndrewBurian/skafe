@@ -7,6 +7,10 @@ import (
 	"net"
 )
 
+const (
+	DEFAULT_PORT uint16 = 6969
+)
+
 // Listen for connecting clients
 func ClientLink(conf *ServerConfig, incomingEvents chan<- *AuditEvent) {
 	listenStr := fmt.Sprintf(":%d", conf.port)
