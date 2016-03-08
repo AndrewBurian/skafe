@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"testing"
+	"regexp"
 )
 
 type LogCounter struct {
@@ -16,7 +17,7 @@ func (l *LogCounter) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 
-func TestMatchNodeBlank(t *testing.T) {
+func TestMatchNodeBlankEvent(t *testing.T) {
 
 	counter := &LogCounter{
 		t: t,
@@ -99,5 +100,35 @@ func TestMatchNodeBlankAlert(t *testing.T) {
 
 	if counter.Count != 1 {
 		t.Errorf("Node did not trigger correct logs\nExpecting [1]\nGot [%d]", counter.Count)
+	}
+}
+
+func TestMatchNodeNoMatch(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	node := &RuleNode{
+		trigger: LOG,
+		action:  MATCH,
+		matches: map[string]*regexp.Regexp{
+			"key": regexp.MustCompile("other val"),
+		},
+	}
+
+	conf := &ServerConfig{
+		eventLog: logger,
+	}
+
+	event := &AuditEvent{
+		"key": "val",
+	}
+
+	RunNode(conf, node, event)
+
+	if counter.Count != 0 {
+		t.Errorf("Node did not trigger correct logs\nExpecting [0]\nGot [%d]", counter.Count)
 	}
 }
