@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
-	"testing"
 	"regexp"
+	"testing"
 )
 
 type LogCounter struct {
@@ -130,5 +130,81 @@ func TestMatchNodeNoMatch(t *testing.T) {
 
 	if counter.Count != 0 {
 		t.Errorf("Node did not trigger correct logs\nExpecting [0]\nGot [%d]", counter.Count)
+	}
+}
+
+func TestMatchNodeHalfMatch(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	node := &RuleNode{
+		trigger: LOG,
+		action:  MATCH,
+		matches: map[string]*regexp.Regexp{
+			"key":  regexp.MustCompile("val"),
+			"key2": regexp.MustCompile("other val2"),
+		},
+	}
+
+	conf := &ServerConfig{
+		eventLog: logger,
+	}
+
+	event := &AuditEvent{
+		"key":  "val",
+		"key2": "val2",
+	}
+
+	RunNode(conf, node, event)
+
+	if counter.Count != 0 {
+		t.Errorf("Node did not trigger correct logs\nExpecting [0]\nGot [%d]", counter.Count)
+	}
+}
+
+func TestRecursiveMatch(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	node := &RuleNode{
+		name:    "first",
+		trigger: LOG,
+		action:  MATCH,
+		matches: map[string]*regexp.Regexp{
+			"key":  regexp.MustCompile("val"),
+			"key2": regexp.MustCompile("val2"),
+		},
+		nodes: []*RuleNode{
+			&RuleNode{
+				name:   "second",
+				trigger: LOG,
+				action:  MATCH,
+				matches: map[string]*regexp.Regexp{
+					"key":  regexp.MustCompile("val"),
+					"key2": regexp.MustCompile("val2"),
+				},
+			},
+		},
+	}
+
+	conf := &ServerConfig{
+		eventLog: logger,
+	}
+
+	event := &AuditEvent{
+		"key":  "val",
+		"key2": "val2",
+	}
+
+	RunNode(conf, node, event)
+
+	if counter.Count != 2 {
+		t.Errorf("Node did not trigger correct logs\nExpecting [2]\nGot [%d]", counter.Count)
 	}
 }
