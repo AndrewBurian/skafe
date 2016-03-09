@@ -31,7 +31,7 @@ func ClientLink(conf *ServerConfig, incomingEvents chan<- *AuditEvent) {
 	for {
 		newConn, err := listenConn.Accept()
 		if err != nil {
-			fmt.Println(err)
+			conf.serverLog.Print(err)
 			continue
 		}
 
@@ -55,7 +55,6 @@ func HandleClient(client net.Conn, events chan<- *AuditEvent) {
 		// decode into new event
 		err := decoder.Decode(ev)
 		if err != nil {
-			fmt.Println(err)
 			break
 		}
 
