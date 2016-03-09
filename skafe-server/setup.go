@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"github.com/go-ini/ini"
 	"io/ioutil"
@@ -234,20 +235,31 @@ func setupTLS(conf *ServerConfig) error {
 		return nil
 	}
 
+	// set the server to strict checking
 	conf.tlsConf.ClientAuth = tls.RequireAndVerifyClientCert
 
+	// create the empty CA pool
 	conf.tlsConf.ClientCAs = x509.NewCertPool()
 
-	caData, err := ioutil.ReadFile(conf.tlsCaPath)
+	// Load the CA's PEM encoded cert
+	caPemData, err := ioutil.ReadFile(conf.tlsCaPath)
 	if err != nil {
 		return err
 	}
 
+	// Parse the PEM into readable data
+	header, caData := pem.Decode(caPemData)
+	if header == nil {
+		return fmt.Errorf("Unable to parse CA pem data")
+	}
+
+	// Parse the certs
 	caCerts, err := x509.ParseCertificates(caData)
 	if err != nil {
 		return err
 	}
 
+	// Load the certs into the trusted CA pool
 	for _, caCert := range caCerts {
 		conf.tlsConf.ClientCAs.AddCert(caCert)
 	}
