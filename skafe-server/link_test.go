@@ -37,7 +37,7 @@ func TestClientRejectNoTls(t *testing.T) {
 		HandleClient(c, ev)
 		select {
 		case data := <-ev:
-			t.Errorf("Server received insecure data %s", data)
+			t.Errorf("Server received insecure data %v", data)
 		default:
 		}
 	}(wg)
@@ -92,7 +92,7 @@ func TestClientRejectUntrusted(t *testing.T) {
 		HandleClient(c, ev)
 		select {
 		case data := <-ev:
-			t.Errorf("Server received insecure data %s", data)
+			t.Errorf("Server received insecure data %v", data)
 		default:
 		}
 	}(wg)

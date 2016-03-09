@@ -188,7 +188,7 @@ func createRule(rule *ini.Section, conf *ServerConfig, ruleTree map[string]*Rule
 	case "script":
 		newRule, err = createScriptRule(rule)
 	default:
-		return fmt.Errorf("Rule [%s] has invalid action: %s", rule.Name(), rule, rule.Key("action").Value())
+		return fmt.Errorf("Rule [%s] has invalid action: %s", rule.Name(), rule.Key("action").Value())
 
 	}
 

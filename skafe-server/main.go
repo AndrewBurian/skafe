@@ -42,7 +42,7 @@ func main() {
 	// setup the rule tree for the rule engine
 	baseRule, err := SetupRuleTree(conf, ruleConf)
 	if err != nil {
-		conf.serverLog.Fatalf("Error loading rule engine: ", err)
+		conf.serverLog.Fatalf("Error loading rule engine: %s", err)
 	}
 
 	evChan := make(chan *AuditEvent)
