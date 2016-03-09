@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"testing"
 )
 
@@ -52,6 +53,31 @@ func TestTLSSetupGood(t *testing.T) {
 	}
 	if conf.tlsConf == nil {
 		t.Errorf("TLS Conf not created")
+	}
+}
+
+func TestTLSSetupGoodWithCA(t *testing.T) {
+	conf, err := setupConfig("tests/tls_goodca.conf")
+	checkErr(nil, err, t)
+	err = setupTLS(conf)
+	checkErr(nil, err, t)
+
+	if conf.tlsConf.ClientAuth != tls.RequireAndVerifyClientCert {
+		t.Errorf("TLS didn't enable strict client checking")
+	}
+
+	if conf.tlsConf.ClientCAs == nil {
+		t.Errorf("TLS didn't setup client CA pool")
+	}
+}
+
+func TestTLSSetupBadCA(t *testing.T) {
+	conf, err := setupConfig("tests/tls_badca.conf")
+	checkErr(nil, err, t)
+	err = setupTLS(conf)
+
+	if err == nil {
+		t.Errorf("No error returned where one should have been")
 	}
 }
 

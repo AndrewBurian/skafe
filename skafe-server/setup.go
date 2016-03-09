@@ -2,8 +2,10 @@ package main
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"github.com/go-ini/ini"
+	"io/ioutil"
 	"log"
 	"log/syslog"
 	"os"
@@ -29,9 +31,11 @@ type ServerConfig struct {
 
 	// TLS params
 	tls         bool
+	tlsStrict   bool
 	tlsConf     *tls.Config
 	tlsKeyPath  string
 	tlsCertPath string
+	tlsCaPath   string
 }
 
 var (
@@ -120,6 +124,13 @@ func setupConfig(cfgPath string) (*ServerConfig, error) {
 
 			cfg.tlsCertPath = defSec.Key("tlscert").Value()
 			cfg.tlsKeyPath = defSec.Key("tlskey").Value()
+
+			// check for struct checking
+			if key, err := defSec.GetKey("tlsca"); err == nil {
+				cfg.tlsCaPath = key.Value()
+				cfg.tlsStrict = true
+			}
+
 		}
 	}
 
@@ -217,6 +228,29 @@ func setupTLS(conf *ServerConfig) error {
 	conf.tlsConf = &tls.Config{}
 
 	conf.tlsConf.Certificates = append(conf.tlsConf.Certificates, cert)
+
+	// check if we're strict checking
+	if !conf.tlsStrict {
+		return nil
+	}
+
+	conf.tlsConf.ClientAuth = tls.RequireAndVerifyClientCert
+
+	conf.tlsConf.ClientCAs = x509.NewCertPool()
+
+	caData, err := ioutil.ReadFile(conf.tlsCaPath)
+	if err != nil {
+		return err
+	}
+
+	caCerts, err := x509.ParseCertificates(caData)
+	if err != nil {
+		return err
+	}
+
+	for _, caCert := range caCerts {
+		conf.tlsConf.ClientCAs.AddCert(caCert)
+	}
 
 	return nil
 }

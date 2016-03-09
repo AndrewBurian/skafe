@@ -595,7 +595,6 @@ func TestCreateRuleBadAction(t *testing.T) {
 	}
 }
 
-
 func TestCreateRuleBadTrigger(t *testing.T) {
 
 	counter := &LogCounter{
