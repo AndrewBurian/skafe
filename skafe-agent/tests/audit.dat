@@ -1,0 +1,39 @@
+node=mint-VirtualBox type=SYSCALL msg=audit(1457564962.424:1193): arch=c000003e syscall=59 success=yes exit=0 a0=7f0fbce84930 a1=7f0fb9a24960 a2=7fff8f782678 a3=8 items=2 ppid=3181 pid=3466 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="audispd" exe="/sbin/audispd" key="exec"
+node=mint-VirtualBox type=EXECVE msg=audit(1457564962.424:1193): argc=1 a0="/sbin/audispd"
+node=mint-VirtualBox type=CWD msg=audit(1457564962.424:1193):  cwd="/"
+node=mint-VirtualBox type=PATH msg=audit(1457564962.424:1193): item=0 name="/sbin/audispd" inode=290316 dev=fc:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+node=mint-VirtualBox type=PATH msg=audit(1457564962.424:1193): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=264435 dev=fc:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+node=mint-VirtualBox type=UNKNOWN[1327] msg=audit(1457564962.424:1193): proctitle="/sbin/audispd"
+node=mint-VirtualBox type=EOE msg=audit(1457564962.424:1193): 
+node=mint-VirtualBox type=SYSCALL msg=audit(1457564962.424:1194): arch=c000003e syscall=59 success=yes exit=0 a0=7fcf13be65a0 a1=7ffebfaec7d0 a2=0 a3=7fcf12ac7a10 items=1 ppid=3466 pid=3467 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="echoer" exe="/root/echoer" key="exec"
+node=mint-VirtualBox type=EXECVE msg=audit(1457564962.424:1194): argc=1 a0="/root/echoer"
+node=mint-VirtualBox type=CWD msg=audit(1457564962.424:1194):  cwd="/"
+node=mint-VirtualBox type=PATH msg=audit(1457564962.424:1194): item=0 name="/root/echoer" inode=1089 dev=fc:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+node=mint-VirtualBox type=UNKNOWN[1327] msg=audit(1457564962.424:1194): proctitle="/root/echoer"
+node=mint-VirtualBox type=EOE msg=audit(1457564962.424:1194): 
+node=mint-VirtualBox type=USER_ACCT msg=audit(1457565422.080:1195): pid=3489 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:accounting acct="root" exe="/usr/sbin/cron" hostname=? addr=? terminal=cron res=success'
+node=mint-VirtualBox type=CRED_ACQ msg=audit(1457565422.080:1196): pid=3489 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:setcred acct="root" exe="/usr/sbin/cron" hostname=? addr=? terminal=cron res=success'
+node=mint-VirtualBox type=USER_START msg=audit(1457565422.088:1197): pid=3489 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:session_open acct="root" exe="/usr/sbin/cron" hostname=? addr=? terminal=cron res=success'
+node=mint-VirtualBox type=SYSCALL msg=audit(1457565422.124:1198): arch=c000003e syscall=59 success=yes exit=0 a0=834dd6 a1=7ffcc05cfe00 a2=834e40 a3=7ffcc05d1c30 items=2 ppid=3489 pid=3490 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="sh" exe="/bin/dash" key="exec"
+node=mint-VirtualBox type=EXECVE msg=audit(1457565422.124:1198): argc=3 a0="/bin/sh" a1="-c" a2=2020206364202F2026262072756E2D7061727473202D2D7265706F7274202F6574632F63726F6E2E686F75726C79
+node=mint-VirtualBox type=CWD msg=audit(1457565422.124:1198):  cwd="/root"
+node=mint-VirtualBox type=PATH msg=audit(1457565422.124:1198): item=0 name="/bin/sh" inode=129572 dev=fc:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+node=mint-VirtualBox type=PATH msg=audit(1457565422.124:1198): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=264435 dev=fc:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+node=mint-VirtualBox type=UNKNOWN[1327] msg=audit(1457565422.124:1198): proctitle=2F62696E2F7368002D63002020206364202F2026262072756E2D7061727473202D2D7265706F7274202F6574632F63726F6E2E686F75726C79
+node=mint-VirtualBox type=EOE msg=audit(1457565422.124:1198): 
+node=mint-VirtualBox type=SYSCALL msg=audit(1457565422.124:1199): arch=c000003e syscall=59 success=yes exit=0 a0=7f9893c783f0 a1=7f98923b8c18 a2=7f9893c783a8 a3=7f9892391a10 items=2 ppid=3490 pid=3491 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="run-parts" exe="/bin/run-parts" key="exec"
+node=mint-VirtualBox type=EXECVE msg=audit(1457565422.124:1199): argc=3 a0="run-parts" a1="--report" a2="/etc/cron.hourly"
+node=mint-VirtualBox type=CWD msg=audit(1457565422.124:1199):  cwd="/"
+node=mint-VirtualBox type=PATH msg=audit(1457565422.124:1199): item=0 name="/bin/run-parts" inode=129682 dev=fc:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+node=mint-VirtualBox type=PATH msg=audit(1457565422.124:1199): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=264435 dev=fc:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+node=mint-VirtualBox type=UNKNOWN[1327] msg=audit(1457565422.124:1199): proctitle=72756E2D7061727473002D2D7265706F7274002F6574632F63726F6E2E686F75726C79
+node=mint-VirtualBox type=EOE msg=audit(1457565422.124:1199): 
+node=mint-VirtualBox type=CRED_DISP msg=audit(1457565422.144:1200): pid=3489 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:setcred acct="root" exe="/usr/sbin/cron" hostname=? addr=? terminal=cron res=success'
+node=mint-VirtualBox type=USER_END msg=audit(1457565422.144:1201): pid=3489 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:session_close acct="root" exe="/usr/sbin/cron" hostname=? addr=? terminal=cron res=success'
+node=mint-VirtualBox type=SYSCALL msg=audit(1457565521.036:1202): arch=c000003e syscall=59 success=yes exit=0 a0=12946e8 a1=128ecc8 a2=1272008 a3=7fff230f2ae0 items=2 ppid=3066 pid=3496 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts4 ses=4294967295 comm="pkill" exe="/usr/bin/pgrep" key="exec"
+node=mint-VirtualBox type=EXECVE msg=audit(1457565521.036:1202): argc=3 a0="pkill" a1="-TERM" a2="audisp"
+node=mint-VirtualBox type=CWD msg=audit(1457565521.036:1202):  cwd="/etc/audisp/plugins.d"
+node=mint-VirtualBox type=PATH msg=audit(1457565521.036:1202): item=0 name="/usr/bin/pkill" inode=394441 dev=fc:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+node=mint-VirtualBox type=PATH msg=audit(1457565521.036:1202): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=264435 dev=fc:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+node=mint-VirtualBox type=UNKNOWN[1327] msg=audit(1457565521.036:1202): proctitle=706B696C6C002D5445524D00617564697370
+node=mint-VirtualBox type=EOE msg=audit(1457565521.036:1202): 
