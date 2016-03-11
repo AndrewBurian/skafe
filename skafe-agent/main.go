@@ -22,9 +22,12 @@ func main() {
 
 	enrichedEventChan := make(chan AuditEvent) // enricher -> cache
 
-	sendEventChan := make(chan AuditEvent) // cache -> server
+	sendEventChan := make(chan AuditEvent) // cache -> rateLimiter
 
-	go ServerLink(sendEventChan, logger)
+	serverChan := make(chan AuditEvent) // rateLimiter -> serverLink
+
+	go ServerLink(serverChan, logger)
+	go RateLimit(sendEventChan, serverChan, 10, 1000000)
 	go Cache(enrichedEventChan, sendEventChan, logger)
 	go Enricher(newEventChan, enrichedEventChan, logger)
 
