@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"testing"
 )
 
@@ -15,6 +16,38 @@ func TestAuditParseValid(t *testing.T) {
 	_, err := ParseEvent(data)
 	if err != nil {
 		t.Errorf("Failed to parse event: %s", err)
+	}
+
+}
+
+func TestAudispValid(t *testing.T) {
+
+	buf := bytes.NewBufferString(validEvent)
+
+	evChan := make(chan AuditEvent, 2)
+
+	err := Audisp(evChan, buf)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case _, ok := <-evChan:
+		if !ok {
+			t.Fatalf("No event received")
+		}
+	default:
+		t.Fatal("Event not received")
+	}
+
+	select {
+	case _, ok := <-evChan:
+		if ok {
+			t.Fatalf("More than one event received")
+		}
+	default:
+		t.Fatalf("Chanel not closed")
 	}
 
 }

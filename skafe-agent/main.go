@@ -1,11 +1,16 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 )
 
 func main() {
+
+	audisp := flag.Bool("audisp", false, "Run as Audisp plugin (read stdin)")
+	flag.Parse()
+
 	// create logger
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 
@@ -22,5 +27,10 @@ func main() {
 	go ServerLink(sendEventChan, logger)
 	go Cache(enrichedEventChan, sendEventChan, logger)
 	go Enricher(newEventChan, enrichedEventChan, logger)
-	Auditor(newEventChan, logger)
+
+	if *audisp {
+		Audisp(newEventChan, os.Stdin)
+	} else {
+		Auditor(newEventChan, logger)
+	}
 }
