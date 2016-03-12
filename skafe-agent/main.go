@@ -28,7 +28,7 @@ func main() {
 
 	go ServerLink(serverChan, logger)
 	go RateLimit(sendEventChan, serverChan, 10, 1000000)
-	go Cache(enrichedEventChan, sendEventChan, logger)
+	go Cache(enrichedEventChan, sendEventChan, 10, nil)
 	go Enricher(newEventChan, enrichedEventChan, logger)
 
 	if *audisp {
