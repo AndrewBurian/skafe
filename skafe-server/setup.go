@@ -37,6 +37,9 @@ type ServerConfig struct {
 	tlsKeyPath  string
 	tlsCertPath string
 	tlsCaPath   string
+
+	// Script Engine Params
+	execRuby string
 }
 
 var (
@@ -133,6 +136,13 @@ func setupConfig(cfgPath string) (*ServerConfig, error) {
 			}
 
 		}
+	}
+
+	// specify exec commands
+	if key, err := defSec.GetKey("ruby"); err == nil {
+		cfg.execRuby = key.Value()
+	} else {
+		cfg.execRuby = "ruby"
 	}
 
 	return cfg, nil

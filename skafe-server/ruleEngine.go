@@ -30,14 +30,14 @@ type RuleNode struct {
 	trigger int
 }
 
-func RuleEngine(conf *ServerConfig, base *RuleNode, events <-chan *AuditEvent) {
+func RuleEngine(conf *ServerConfig, base *RuleNode, events <-chan *AuditEvent, scripts *ScriptPool) {
 
 	conf.serverLog.Println("Rule Engine started")
 
 	// the channel to dispatch events to workers over
 	workers := make(chan *AuditEvent)
 
-	go RuleEngineWorker(conf, base, workers)
+	go RuleEngineWorker(conf, base, workers, scripts)
 
 	for ev := range events {
 		workers <- ev
@@ -47,17 +47,17 @@ func RuleEngine(conf *ServerConfig, base *RuleNode, events <-chan *AuditEvent) {
 
 }
 
-func RuleEngineWorker(conf *ServerConfig, base *RuleNode, events <-chan *AuditEvent) {
+func RuleEngineWorker(conf *ServerConfig, base *RuleNode, events <-chan *AuditEvent, scripts *ScriptPool) {
 
 	// so long as there are events to process
 	for ev := range events {
 
 		// recurively follow the descision tree
-		RunNode(conf, base, ev)
+		RunNode(conf, base, ev, scripts)
 	}
 }
 
-func RunNode(conf *ServerConfig, node *RuleNode, ev *AuditEvent) {
+func RunNode(conf *ServerConfig, node *RuleNode, ev *AuditEvent, scripts *ScriptPool) {
 
 	if node.action == SCRIPT {
 		// TODO Scripts
@@ -96,7 +96,7 @@ func RunNode(conf *ServerConfig, node *RuleNode, ev *AuditEvent) {
 
 	// recursively call all watching nodes
 	for _, n := range node.nodes {
-		RunNode(conf, n, ev)
+		RunNode(conf, n, ev, scripts)
 	}
 }
 

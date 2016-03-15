@@ -45,12 +45,17 @@ func main() {
 		conf.serverLog.Fatalf("Error loading rule engine: %s", err)
 	}
 
+	scriptPool, err := SetupScriptPool(conf)
+	if err != nil {
+		conf.serverLog.Fatalf("Error loading script engines: %s", err)
+	}
+
 	evChan := make(chan *AuditEvent)
 	ruleChan := make(chan *AuditEvent)
 
 	go ClientLink(conf, evChan)
 
-	go RuleEngine(conf, baseRule, ruleChan)
+	go RuleEngine(conf, baseRule, ruleChan, scriptPool)
 
 	QueueEvents(conf, evChan, ruleChan)
 
