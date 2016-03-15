@@ -26,7 +26,7 @@ type ScriptPool struct {
 }
 
 type ScriptWorker interface {
-	Run(string) bool
+	Run(string, *AuditEvent) bool
 	Lang() string
 }
 

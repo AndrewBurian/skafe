@@ -1,0 +1,8 @@
+# Send audit event to the script engine
+EVENT {"key":"val",...}\n
+
+# Command the script engine to run the given function with its stored event
+CMD <function name>\n
+
+# Result returned by the script engine
+RESP [true|false]
