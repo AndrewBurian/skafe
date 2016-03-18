@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/go-ini/ini"
-	"github.com/robertkrimen/otto"
 	"io/ioutil"
 	"regexp"
 	"strings"
@@ -25,7 +24,8 @@ type RuleNode struct {
 	action  int
 	watch   string
 	matches map[string]*regexp.Regexp
-	script  *otto.Script
+	script  string
+	lang    string
 	nodes   []*RuleNode
 	trigger int
 }
@@ -60,7 +60,25 @@ func RuleEngineWorker(conf *ServerConfig, base *RuleNode, events <-chan *AuditEv
 func RunNode(conf *ServerConfig, node *RuleNode, ev *AuditEvent, scripts *ScriptPool) {
 
 	if node.action == SCRIPT {
-		// TODO Scripts
+
+		// get a script worker in the right language
+		worker, err := scripts.GetWorker(node.lang)
+		if err != nil {
+			conf.serverLog.Println("Error retrieving worker: %s", err)
+			return
+		}
+
+		// run the specified function
+		match, err := worker.Run(node.script, ev)
+		if err != nil {
+			conf.serverLog.Println("Error running script %s-%s: %s", node.lang, node.script, err)
+			return
+		}
+
+		// return if no match
+		if !match {
+			return
+		}
 	}
 
 	if node.action == MATCH {

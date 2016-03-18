@@ -55,7 +55,7 @@ func SetupScriptPool(conf *ServerConfig) (*ScriptPool, error) {
 }
 
 // Get a script worker of the specified language
-func (s *ScriptPool) GetWoker(lang string) (ScriptWorker, error) {
+func (s *ScriptPool) GetWorker(lang string) (ScriptWorker, error) {
 	if _, ok := s.count[lang]; !ok {
 		return nil, fmt.Errorf("No such worker language: %s", lang)
 	}
