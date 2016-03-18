@@ -16,7 +16,7 @@ def mainLoop
 		commands = fullCmd.split(' ')
 
 		case commands[0] 
-			
+
 			when /EVENT/i
 				# Handle New Event
 				if commands.length != 2 then
@@ -31,7 +31,7 @@ def mainLoop
 					puts "ERR No event set"
 					next
 				end
-				
+
 				begin
 					send(commands[1], event)
 				rescue
@@ -46,8 +46,10 @@ def mainLoop
 end
 
 def requireAll
-	Dir[File.dirname(__FILE__) + '/lib/*.rb'].each do |file| 
-  		require File.basename(file, File.extname(file))
+
+	libPath = './lib/'
+	Dir[libPath + '*.rb'].each do |file|
+		require libPath + File.basename(file, File.extname(file))
 	end
 end
 

@@ -35,25 +35,25 @@ func (w *RbScriptWorker) Lang() string {
 	return SCRIPT_LANG_RUBY
 }
 
-func (w *RbScriptWorker) Run(function string, ev *AuditEvent) bool {
+func (w *RbScriptWorker) Run(function string, ev *AuditEvent) (bool, error) {
 
 	// Send the event to the script engine
 	jsonEv, err := json.Marshal(ev)
 	if err != nil {
-		panic(err) //TODO
+		return false, err
 	}
 
 	cmd := fmt.Sprintf("EVENT %s\n", jsonEv)
 	_, err = w.stdin.WriteString(cmd)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
 	// Send command to script engine
 	cmd = fmt.Sprintf("CMD %s\n", function)
 	_, err = w.stdin.WriteString(cmd)
 	if err != nil {
-		panic(err) //TODO error handling
+		return false, err
 	}
 
 	// receive responses
@@ -61,7 +61,7 @@ func (w *RbScriptWorker) Run(function string, ev *AuditEvent) bool {
 		// get message from script
 		resp, err := w.stdout.ReadString('\n')
 		if err != nil {
-			panic(err) //TODO error handling
+			return false, err
 		}
 
 		// Trim trailing newline
@@ -70,19 +70,30 @@ func (w *RbScriptWorker) Run(function string, ev *AuditEvent) bool {
 		// Split message into parts
 		parts := strings.Split(resp, " ")
 
+		// Base action on first message part
 		switch parts[0] {
+
+		// Response with a result
 		case "RESP":
-			if parts[1] == "true" {
-				return true
-			} else {
-				return false
+			switch parts[1] {
+			case "true", "TRUE", "True":
+				return true, nil
+			case "false", "FALSE", "False":
+				return false, nil
+			default:
+				return false, fmt.Errorf("Unknown response type %s", parts[1])
 			}
+
+		// Error occured
+		case "ERR":
+			return false, fmt.Errorf("An error occured in script execution: %s", resp)
+
+		// Unknown response
 		default:
-			panic("WHAT IS GOING ON") //TODO error handling
+			return false, fmt.Errorf("Unknown command from ruby script worker: %s", resp)
 		}
 	}
 
 	// Should never arrive here
-	panic("...")
-	return false
+	return false, fmt.Errorf("Unhandled exception occured")
 }
