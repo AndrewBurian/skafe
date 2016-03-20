@@ -67,6 +67,7 @@ func RunNode(conf *ServerConfig, node *RuleNode, ev *AuditEvent, scripts *Script
 			conf.serverLog.Println("Error retrieving worker: %s", err)
 			return
 		}
+		defer scripts.ReturnWorker(worker)
 
 		// run the specified function
 		match, err := worker.Run(node.script, ev)
@@ -147,7 +148,7 @@ func SetupRuleTreeConfig(conf *ServerConfig) (*ini.File, error) {
 	return rulesConf, nil
 }
 
-func SetupRuleTree(conf *ServerConfig, rulesConf *ini.File) (*RuleNode, error) {
+func SetupRuleTree(conf *ServerConfig, rulesConf *ini.File, pool *ScriptPool) (*RuleNode, error) {
 
 	// Create the base rule. A matching rule with no matches will match all
 	baseNode := &RuleNode{
@@ -161,7 +162,7 @@ func SetupRuleTree(conf *ServerConfig, rulesConf *ini.File) (*RuleNode, error) {
 	// for each rule section
 	for _, rule := range rulesConf.Sections() {
 
-		err := createRule(rule, conf, ruleTree)
+		err := createRule(rule, conf, ruleTree, pool)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +172,7 @@ func SetupRuleTree(conf *ServerConfig, rulesConf *ini.File) (*RuleNode, error) {
 	return baseNode, nil
 }
 
-func createRule(rule *ini.Section, conf *ServerConfig, ruleTree map[string]*RuleNode) error {
+func createRule(rule *ini.Section, conf *ServerConfig, ruleTree map[string]*RuleNode, pool *ScriptPool) error {
 
 	// skip the default section
 	if rule.Name() == ini.DEFAULT_SECTION {
@@ -204,7 +205,7 @@ func createRule(rule *ini.Section, conf *ServerConfig, ruleTree map[string]*Rule
 	case "match":
 		newRule, err = createMatchRule(rule)
 	case "script":
-		newRule, err = createScriptRule(rule)
+		newRule, err = createScriptRule(rule, pool)
 	default:
 		return fmt.Errorf("Rule [%s] has invalid action: %s", rule.Name(), rule.Key("action").Value())
 
@@ -273,9 +274,48 @@ func createMatchRule(conf *ini.Section) (*RuleNode, error) {
 	return rule, nil
 }
 
-func createScriptRule(conf *ini.Section) (*RuleNode, error) {
-	return nil, fmt.Errorf("Not implemented")
-	//TODO
+func createScriptRule(conf *ini.Section, pool *ScriptPool) (*RuleNode, error) {
+
+	newRule := &RuleNode{
+		name:   conf.Name(),
+		watch:  conf.Key("watch").Value(),
+		action: SCRIPT,
+	}
+
+	// setup rule triggers
+	if err := addRuleTrigger(conf, newRule); err != nil {
+		return nil, err
+	}
+
+	// Get the script language
+	if !conf.HasKey("lang") {
+		return nil, fmt.Errorf("No lang section available in script rule [%s]", newRule.name)
+	}
+
+	newRule.lang = conf.Key("lang").Value()
+
+	// Get the script function
+	if !conf.HasKey("script") {
+		return nil, fmt.Errorf("No script entry in script rule [%s]", newRule.name)
+	}
+
+	newRule.script = conf.Key("script").Value()
+
+	// Check script exists in script pool
+	worker, err := pool.GetWorker(newRule.lang)
+	if err != nil {
+		return nil, err
+	}
+	defer pool.ReturnWorker(worker)
+
+	res := worker.HasFunc(newRule.script)
+	if !res {
+		return nil, fmt.Errorf("No function by the name of [%s] available in language [%s] for script rule [%s]", newRule.script, newRule.lang, newRule.name)
+	}
+
+	// Rule checks out
+	return newRule, nil
+
 }
 
 func addRuleTrigger(conf *ini.Section, rule *RuleNode) error {

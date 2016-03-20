@@ -35,6 +35,11 @@ func (w *RbScriptWorker) Lang() string {
 	return SCRIPT_LANG_RUBY
 }
 
+func (w *RbScriptWorker) HasFunc(function string) bool {
+	//TODO
+	return false
+}
+
 func (w *RbScriptWorker) Run(function string, ev *AuditEvent) (bool, error) {
 
 	// Send the event to the script engine

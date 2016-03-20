@@ -28,6 +28,7 @@ type ScriptPool struct {
 type ScriptWorker interface {
 	Run(string, *AuditEvent) (bool, error)
 	Lang() string
+	HasFunc(string) bool
 }
 
 func SetupScriptPool(conf *ServerConfig) (*ScriptPool, error) {

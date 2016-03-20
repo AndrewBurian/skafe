@@ -39,15 +39,16 @@ func main() {
 		log.Fatalf("Unable to load rule tree config: %s\n", err.Error())
 	}
 
-	// setup the rule tree for the rule engine
-	baseRule, err := SetupRuleTree(conf, ruleConf)
-	if err != nil {
-		conf.serverLog.Fatalf("Error loading rule engine: %s", err)
-	}
-
+	// setup script pool
 	scriptPool, err := SetupScriptPool(conf)
 	if err != nil {
 		conf.serverLog.Fatalf("Error loading script engines: %s", err)
+	}
+
+	// setup the rule tree for the rule engine
+	baseRule, err := SetupRuleTree(conf, ruleConf, scriptPool)
+	if err != nil {
+		conf.serverLog.Fatalf("Error loading rule engine: %s", err)
 	}
 
 	evChan := make(chan *AuditEvent)
