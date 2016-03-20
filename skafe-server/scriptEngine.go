@@ -44,6 +44,9 @@ func SetupScriptPool(conf *ServerConfig) (*ScriptPool, error) {
 		SCRIPT_LANG_RUBY: NewRbScriptWorker,
 	}
 
+	pool.next = make(map[string]chan ScriptWorker)
+	pool.count = make(map[string]int)
+
 	for _, lang := range ScriptLangs {
 		// setup worker channels
 		pool.next[lang] = make(chan ScriptWorker, MAX_SCRIPT_WORKERS)

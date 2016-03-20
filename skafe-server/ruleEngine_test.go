@@ -38,7 +38,7 @@ func TestMatchNodeBlankEvent(t *testing.T) {
 		"key": "val",
 	}
 
-	RunNode(conf, node, event)
+	RunNode(conf, node, event, nil)
 
 	if counter.Count != 1 {
 		t.Errorf("Node did not trigger correct logs\nExpecting [1]\nGot [%d]", counter.Count)
@@ -68,7 +68,7 @@ func TestMatchNodeBlankBoth(t *testing.T) {
 		"key": "val",
 	}
 
-	RunNode(conf, node, event)
+	RunNode(conf, node, event, nil)
 
 	if eventCounter.Count != 1 {
 		t.Errorf("Node did not trigger correct event logs\nExpecting [1]\nGot [%d]", eventCounter.Count)
@@ -97,7 +97,7 @@ func TestMatchNodeBlankAlert(t *testing.T) {
 		"key": "val",
 	}
 
-	RunNode(conf, node, event)
+	RunNode(conf, node, event, nil)
 
 	if counter.Count != 1 {
 		t.Errorf("Node did not trigger correct logs\nExpecting [1]\nGot [%d]", counter.Count)
@@ -127,7 +127,7 @@ func TestMatchNodeNoMatch(t *testing.T) {
 		"key": "val",
 	}
 
-	RunNode(conf, node, event)
+	RunNode(conf, node, event, nil)
 
 	if counter.Count != 0 {
 		t.Errorf("Node did not trigger correct logs\nExpecting [0]\nGot [%d]", counter.Count)
@@ -159,7 +159,7 @@ func TestMatchNodeHalfMatch(t *testing.T) {
 		"key2": "val2",
 	}
 
-	RunNode(conf, node, event)
+	RunNode(conf, node, event, nil)
 
 	if counter.Count != 0 {
 		t.Errorf("Node did not trigger correct logs\nExpecting [0]\nGot [%d]", counter.Count)
@@ -203,7 +203,7 @@ func TestRecursiveMatch(t *testing.T) {
 		"key2": "val2",
 	}
 
-	RunNode(conf, node, event)
+	RunNode(conf, node, event, nil)
 
 	if counter.Count != 2 {
 		t.Errorf("Node did not trigger correct logs\nExpecting [2]\nGot [%d]", counter.Count)
@@ -459,7 +459,7 @@ func TestCreateRuleSkipDefault(t *testing.T) {
 	`))
 	checkErr(nil, err, t)
 
-	err = createRule(file.Section(""), conf, ruleTree)
+	err = createRule(file.Section(""), conf, ruleTree, nil)
 	checkErr(nil, err, t)
 
 	if counter.Count != 0 {
@@ -491,7 +491,7 @@ func TestCreateRuleSkipNoWatch(t *testing.T) {
 	`))
 	checkErr(nil, err, t)
 
-	err = createRule(file.Section("Rule"), conf, ruleTree)
+	err = createRule(file.Section("Rule"), conf, ruleTree, nil)
 	checkErr(nil, err, t)
 
 	if counter.Count != 1 {
@@ -524,7 +524,7 @@ func TestCreateRuleSkipNoParent(t *testing.T) {
 	`))
 	checkErr(nil, err, t)
 
-	err = createRule(file.Section("Rule"), conf, ruleTree)
+	err = createRule(file.Section("Rule"), conf, ruleTree, nil)
 	checkErr(nil, err, t)
 
 	if counter.Count != 1 {
@@ -556,7 +556,7 @@ func TestCreateRuleSkipNoAction(t *testing.T) {
 	`))
 	checkErr(nil, err, t)
 
-	err = createRule(file.Section("Rule"), conf, ruleTree)
+	err = createRule(file.Section("Rule"), conf, ruleTree, nil)
 	checkErr(nil, err, t)
 
 	if counter.Count != 1 {
@@ -589,7 +589,7 @@ func TestCreateRuleBadAction(t *testing.T) {
 	`))
 	checkErr(nil, err, t)
 
-	err = createRule(file.Section("Rule"), conf, ruleTree)
+	err = createRule(file.Section("Rule"), conf, ruleTree, nil)
 	if err == nil {
 		t.Errorf("No error returned where one was expected")
 	}
@@ -620,7 +620,7 @@ func TestCreateRuleBadTrigger(t *testing.T) {
 	`))
 	checkErr(nil, err, t)
 
-	err = createRule(file.Section("Rule"), conf, ruleTree)
+	err = createRule(file.Section("Rule"), conf, ruleTree, nil)
 	if err == nil {
 		t.Errorf("No error returned where one was expected")
 	}
@@ -642,7 +642,7 @@ func TestCreateRuleMatch(t *testing.T) {
 	`))
 	checkErr(nil, err, t)
 
-	err = createRule(file.Section("Rule"), nil, ruleTree)
+	err = createRule(file.Section("Rule"), nil, ruleTree, nil)
 	checkErr(nil, err, t)
 
 	rule, ok := ruleTree["Rule"]
@@ -664,6 +664,58 @@ func TestCreateRuleMatch(t *testing.T) {
 
 }
 
+func TestSetupScriptRule(t *testing.T) {
+
+	// script rule entry
+	file, err := ini.Load([]byte(`
+		[Rule]
+		action = script
+		watch = base
+		trigger = log
+		script = testscript
+		lang = ruby
+	`))
+	checkErr(nil, err, t)
+
+	// Server Config
+	conf := &ServerConfig{
+		execRuby: "ruby",
+	}
+
+	// script pool
+	pool, err := SetupScriptPool(conf)
+	checkErr(nil, err, t)
+
+	// Script rule
+	rule, err := createScriptRule(file.Section("Rule"), pool)
+	checkErr(nil, err, t)
+
+	// verify script parts
+	if rule.name != "Rule" {
+		t.Errorf("Rule name mismatch\nExpected [%s]\nGot [%s]", "Rule", rule.name)
+	}
+
+	if rule.action != SCRIPT {
+		t.Errorf("Rule got wrong action")
+	}
+
+	if rule.watch != "base" {
+		t.Errorf("Rule got wrong watch\nExpected [%s]\nGot [%s]", "base", rule.watch)
+	}
+
+	if rule.trigger != LOG {
+		t.Errorf("Rule got wrong trigger")
+	}
+
+	if rule.lang != SCRIPT_LANG_RUBY {
+		t.Errorf("Rule got wrong lang\nExpected [%s]\nGot [%s]", SCRIPT_LANG_RUBY, rule.lang)
+	}
+
+	if rule.script != "testscript" {
+		t.Errorf("Rule got wrong script\nExpected [%s]\nGot [%s]", "testscript", rule.script)
+	}
+}
+
 func TestSetupRuleTreePass(t *testing.T) {
 
 	file, err := ini.Load([]byte(`
@@ -676,7 +728,7 @@ func TestSetupRuleTreePass(t *testing.T) {
 	`))
 	checkErr(nil, err, t)
 
-	base, err := SetupRuleTree(nil, file)
+	base, err := SetupRuleTree(nil, file, nil)
 	checkErr(nil, err, t)
 
 	if base == nil {
@@ -701,7 +753,7 @@ func TestSetupRuleTreeFail(t *testing.T) {
 	`))
 	checkErr(nil, err, t)
 
-	base, err := SetupRuleTree(nil, file)
+	base, err := SetupRuleTree(nil, file, nil)
 
 	if err == nil || base != nil {
 		t.Errorf("No error returned or base node initialized when it shouldn't have been")
