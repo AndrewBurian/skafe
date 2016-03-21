@@ -45,6 +45,36 @@ func TestMatchNodeBlankEvent(t *testing.T) {
 	}
 }
 
+func TestNoMatchMissingKey(t *testing.T) {
+
+	counter := &LogCounter{
+		t: t,
+	}
+	logger := log.New(counter, "", 0)
+
+	node := &RuleNode{
+		trigger: LOG,
+		action: MATCH,
+		matches: map[string]*regexp.Regexp{
+			"key": nil,
+		},
+	}
+
+	conf := &ServerConfig{
+		eventLog: logger,
+	}
+
+	event := &AuditEvent{
+		"key2": "val2",
+	}
+
+	RunNode(conf, node, event, nil)
+
+	if counter.Count != 0 {
+		t.Errorf("Node triggered log event where it shouldn't have")
+	}
+}
+
 func TestMatchNodeBlankBoth(t *testing.T) {
 	eventCounter := &LogCounter{
 		t: t,

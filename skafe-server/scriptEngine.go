@@ -29,6 +29,7 @@ type ScriptWorker interface {
 	Run(string, *AuditEvent) (bool, error)
 	Lang() string
 	HasFunc(string) bool
+	Running() bool
 }
 
 func SetupScriptPool(conf *ServerConfig) (*ScriptPool, error) {

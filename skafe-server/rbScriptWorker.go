@@ -11,8 +11,8 @@ import (
 type RbScriptWorker struct {
 	lang   string
 	cmd    *exec.Cmd
-	stdin  bufio.Writer
-	stdout bufio.Reader
+	stdin  *bufio.Writer
+	stdout *bufio.Reader
 }
 
 func NewRbScriptWorker(bin string) (ScriptWorker, error) {
@@ -24,11 +24,38 @@ func NewRbScriptWorker(bin string) (ScriptWorker, error) {
 	// Exec the ruby base script
 	worker.cmd = exec.Command(bin, "scripts/ruby.rb")
 
+	// Get stdout
+	stdout, err := worker.cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	worker.stdout = bufio.NewReader(stdout)
+
+	// Get stdin
+	stdin, err := worker.cmd.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+	worker.stdin = bufio.NewWriter(stdin)
+
+	// Start worker
 	if err := worker.cmd.Start(); err != nil {
 		return nil, err
 	}
 
+	// Check working
+	if !worker.Running() {
+		return nil, fmt.Errorf("Process died on creation")
+	}
+
 	return worker, nil
+}
+
+func (w *RbScriptWorker) Running() bool {
+	if w.cmd.ProcessState == nil {
+		return false
+	}
+	return !w.cmd.ProcessState.Exited()
 }
 
 func (w *RbScriptWorker) Lang() string {
