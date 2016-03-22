@@ -1,4 +1,3 @@
-makefile
 skafe-agent/skafe-agent
 skafe-server/skafe-server
 *.bak
