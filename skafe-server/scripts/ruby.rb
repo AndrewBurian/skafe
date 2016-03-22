@@ -8,19 +8,19 @@ def mainLoop
 	# Main run loop
 	loop do
 		# Get the command from stdin
-		fullCmd = gets()
+		fullCmd = STDIN.gets
 
 		return if fullCmd == nil
 
 		# Split into parts
-		commands = fullCmd.split(' ')
+		commands = fullCmd.chomp.split(' ')
 
 		case commands[0] 
 
 			when /EVENT/i
 				# Handle New Event
 				if commands.length != 2 then
-					puts "ERR invalid command format"
+					STDOUT.puts "ERR invalid command format"
 					next
 				end
 				event = JSON.parse(commands[1])
@@ -33,28 +33,32 @@ def mainLoop
 				end
 
 				begin
-					send(commands[1], event)
+					result = send(commands[1], event)
+					if result then
+						STDOUT.puts "RESP True"
+					else
+						STDOUT.puts "RESP False"
+					end
 				rescue
-					puts "ERR No such method"
+					STDOUT.puts "ERR No such method"
 				end
 			else
-				puts "ERR Command not understood"
+				STDOUT.puts "ERR Command not understood"
 
 		end
 
 	end
 end
 
-def requireAll
+def requireAll(libPath)
 
-	libPath = './lib/'
 	Dir[libPath + '*.rb'].each do |file|
 		require libPath + File.basename(file, File.extname(file))
 	end
 end
 
 # Load all the user scripts
-requireAll
+requireAll ARGV[0]
 
 # Run the main loop
 mainLoop

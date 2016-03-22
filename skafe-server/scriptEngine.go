@@ -19,10 +19,11 @@ var (
 )
 
 type ScriptPool struct {
-	execCmd map[string]string
-	next    map[string]chan ScriptWorker
-	count   map[string]int
-	create  map[string]func(string) (ScriptWorker, error)
+	execCmd    map[string]string
+	scriptPath map[string]string
+	next       map[string]chan ScriptWorker
+	count      map[string]int
+	create     map[string]func(string, string) (ScriptWorker, error)
 }
 
 type ScriptWorker interface {
@@ -40,8 +41,13 @@ func SetupScriptPool(conf *ServerConfig) (*ScriptPool, error) {
 		SCRIPT_LANG_RUBY: conf.execRuby,
 	}
 
+	// setup script locations
+	pool.scriptPath = map[string]string{
+		SCRIPT_LANG_RUBY: conf.scriptPathRuby,
+	}
+
 	// setup create functions
-	pool.create = map[string]func(string) (ScriptWorker, error){
+	pool.create = map[string]func(string, string) (ScriptWorker, error){
 		SCRIPT_LANG_RUBY: NewRbScriptWorker,
 	}
 
@@ -76,7 +82,7 @@ func (s *ScriptPool) GetWorker(lang string) (ScriptWorker, error) {
 		return worker, nil
 	default:
 		s.count[lang] += 1
-		return s.create[lang](s.execCmd[lang])
+		return s.create[lang](s.execCmd[lang], s.scriptPath[lang])
 	}
 }
 

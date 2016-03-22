@@ -54,7 +54,7 @@ func TestNoMatchMissingKey(t *testing.T) {
 
 	node := &RuleNode{
 		trigger: LOG,
-		action: MATCH,
+		action:  MATCH,
 		matches: map[string]*regexp.Regexp{
 			"key": nil,
 		},

@@ -5,7 +5,7 @@ import (
 )
 
 func TestNewScriptWorker(t *testing.T) {
-	w, err := NewRbScriptWorker("ruby")
+	w, err := NewRbScriptWorker("ruby", "./scripts")
 	checkErr(nil, err, t)
 
 	if w == nil {
@@ -14,7 +14,7 @@ func TestNewScriptWorker(t *testing.T) {
 }
 
 func TestNewRbScriptWorkerBadBin(t *testing.T) {
-	w, err := NewRbScriptWorker("/bin/false")
+	w, err := NewRbScriptWorker("/bin/false", "./scripts")
 	if err == nil {
 		t.Errorf("No error returned where one should have been")
 	}
@@ -22,5 +22,3 @@ func TestNewRbScriptWorkerBadBin(t *testing.T) {
 		t.Errorf("Non-nil worker returned")
 	}
 }
-
-

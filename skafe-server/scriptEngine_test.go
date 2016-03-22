@@ -3,13 +3,14 @@ package main
 import (
 	"testing"
 )
+
 /*
 func Test(t *testing.T){
 
 }
 */
 
-func TestSetupScriptPoolRuby(t *testing.T){
+func TestSetupScriptPoolRuby(t *testing.T) {
 	conf := &ServerConfig{
 		execRuby: "ruby",
 		//scriptsdir_ruby: "scripts",
@@ -32,7 +33,7 @@ func TestSetupScriptPoolRuby(t *testing.T){
 }
 
 func TestGetWorkerWrongLang(t *testing.T) {
-	pool := &ScriptPool {}
+	pool := &ScriptPool{}
 
 	worker, err := pool.GetWorker("erlang")
 	if err == nil {

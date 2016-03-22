@@ -15,14 +15,17 @@ type RbScriptWorker struct {
 	stdout *bufio.Reader
 }
 
-func NewRbScriptWorker(bin string) (ScriptWorker, error) {
+func NewRbScriptWorker(bin string, arg string) (ScriptWorker, error) {
 
 	worker := &RbScriptWorker{
 		lang: SCRIPT_LANG_RUBY,
 	}
 
+	args := []string{"/usr/lib/skafe/ruby.rb"}
+	args = append(args, arg)
+
 	// Exec the ruby base script
-	worker.cmd = exec.Command(bin, "scripts/ruby.rb")
+	worker.cmd = exec.Command(bin, args...)
 
 	// Get stdout
 	stdout, err := worker.cmd.StdoutPipe()

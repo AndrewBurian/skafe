@@ -39,7 +39,8 @@ type ServerConfig struct {
 	tlsCaPath   string
 
 	// Script Engine Params
-	execRuby string
+	execRuby       string
+	scriptPathRuby string
 }
 
 var (
