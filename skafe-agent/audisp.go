@@ -4,6 +4,7 @@ import (
 	"bufio"
 	audit "github.com/andrewburian/libaudit-go"
 	"io"
+	"strings"
 )
 
 func Audisp(receivedEvents chan<- AuditEvent, in io.Reader) error {
@@ -35,7 +36,7 @@ func Audisp(receivedEvents chan<- AuditEvent, in io.Reader) error {
 }
 
 func ParseEvent(data string) (AuditEvent, error) {
-	_, _, m, err := audit.ParseAuditEvent(data)
+	_, _, m, err := audit.ParseAuditEvent(strings.TrimRight(data, "\n"))
 	if err != nil {
 		return nil, err
 	}
