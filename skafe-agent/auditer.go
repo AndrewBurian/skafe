@@ -1,9 +1,9 @@
 package main
 
 import (
-	//audit "github.com/andrewburian/libaudit-go"
+	audit "github.com/andrewburian/libaudit-go"
 	//"fmt"
-	audit "github.com/mozilla/libaudit-go"
+	//audit "github.com/mozilla/libaudit-go"
 	"io/ioutil"
 	"log"
 	"syscall"

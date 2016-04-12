@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	audisp := flag.Bool("audisp", false, "Run as Audisp plugin (read stdin)")
+	auditd := flag.Bool("audit", false, "Run as system auditer")
 	flag.Parse()
 
 	// create logger
@@ -31,7 +31,7 @@ func main() {
 	go Cache(enrichedEventChan, sendEventChan, 10, nil)
 	go Enricher(newEventChan, enrichedEventChan, logger)
 
-	if *audisp {
+	if ! *auditd {
 		Audisp(newEventChan, os.Stdin)
 	} else {
 		Auditor(newEventChan, logger)
