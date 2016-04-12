@@ -3,12 +3,11 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"os/user"
 )
 
-func Enricher(newEvents <-chan AuditEvent, enrichedEvents chan<- AuditEvent, logger *log.Logger) {
+func Enricher(newEvents <-chan AuditEvent, enrichedEvents chan<- AuditEvent, conf *AgentConfig) {
 
 	for {
 		// get the event

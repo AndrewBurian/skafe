@@ -3,11 +3,14 @@ package main
 import (
 	"encoding/gob"
 	"fmt"
-	"log"
 	"net"
 )
 
-func ServerLink(events <-chan AuditEvent, logger *log.Logger) {
+const (
+	DEFAULT_PORT uint16 = 6969
+)
+
+func ServerLink(events <-chan AuditEvent, conf *AgentConfig) {
 
 	var serverConn net.Conn
 	var err error

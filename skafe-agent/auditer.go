@@ -12,7 +12,7 @@ import (
 
 type AuditEvent map[string]string
 
-func Auditor(receivedEvents chan<- AuditEvent, logger *log.Logger) {
+func Auditor(receivedEvents chan<- AuditEvent, conf *AgentConfig) {
 
 	newEvents, err := setupAudit()
 	if err != nil {

@@ -9,13 +9,17 @@ import (
 func main() {
 
 	auditd := flag.Bool("audit", false, "Run as system auditer")
+	confFile := flag.String("conf", "/etc/skafe/skafe-agent.conf", "Config file path")
 	flag.Parse()
 
-	// create logger
-	logger := log.New(os.Stdout, "", log.LstdFlags)
+	// setup config
+	conf, err := setupConfig(*confFile)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	logger.Println("Started skafe-agent")
-	defer logger.Println("Terminated skafe-agent")
+	conf.log.Println("Started skafe-agent")
+	defer conf.log.Println("Terminated skafe-agent")
 
 	// create channels to pass events between process steps
 	newEventChan := make(chan AuditEvent) // auditer -> enricher
@@ -26,14 +30,14 @@ func main() {
 
 	serverChan := make(chan AuditEvent) // rateLimiter -> serverLink
 
-	go ServerLink(serverChan, logger)
+	go ServerLink(serverChan, conf)
 	go RateLimit(sendEventChan, serverChan, 10, 1000000)
 	go Cache(enrichedEventChan, sendEventChan, 10, nil)
-	go Enricher(newEventChan, enrichedEventChan, logger)
+	go Enricher(newEventChan, enrichedEventChan, conf)
 
 	if ! *auditd {
 		Audisp(newEventChan, os.Stdin)
 	} else {
-		Auditor(newEventChan, logger)
+		Auditor(newEventChan, conf)
 	}
 }
