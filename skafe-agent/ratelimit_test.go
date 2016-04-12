@@ -43,3 +43,33 @@ func TestRateLimit(t *testing.T) {
 		t.Errorf("Rate Limiter ran too slow")
 	}
 }
+
+// check 1m/s has a delay of 1s
+func TestDelay1(t *testing.T) {
+
+	delay := CalculateDelay(1, time.Second)
+	if delay != time.Second {
+		t.Log(delay)
+		t.Errorf("Wrong delay calculated")
+	}
+}
+
+// 2m/s has a delay of 500ms
+func TestDelay2(t *testing.T) {
+
+	delay := CalculateDelay(2, time.Second)
+	if delay != (500 * time.Millisecond) {
+		t.Log(delay)
+		t.Errorf("Wrong delay calculated")
+	}
+}
+
+// 600m/min has a delay of 100ms
+func TestDelay3(t *testing.T) {
+
+	delay := CalculateDelay(600, time.Minute)
+	if delay != (100 * time.Millisecond) {
+		t.Log(delay)
+		t.Errorf("Wrong delay calculated")
+	}
+}

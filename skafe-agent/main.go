@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"time"
 )
 
 func main() {
@@ -31,7 +32,7 @@ func main() {
 	serverChan := make(chan AuditEvent) // rateLimiter -> serverLink
 
 	go ServerLink(serverChan, conf)
-	go RateLimit(sendEventChan, serverChan, 10, 1000000)
+	go RateLimit(sendEventChan, serverChan, 10, time.Second)
 	go Cache(enrichedEventChan, sendEventChan, 10, nil)
 	go Enricher(newEventChan, enrichedEventChan, conf)
 

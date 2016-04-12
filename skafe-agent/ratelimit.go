@@ -6,13 +6,8 @@ import (
 
 func RateLimit(in <-chan AuditEvent, out chan<- AuditEvent, rate uint, span time.Duration) {
 
-	// calculate the number of seconds to delay between messages
-	var delayTime float32 = float32(span.Seconds()) / float32(rate)
-
-	// upcast to milis and truncate
-	var numMilis int64 = int64(delayTime * 1000)
-
-	delay := time.Millisecond * time.Duration(numMilis)
+	// get the delay
+	delay := CalculateDelay(rate, span)
 
 	// create and start the ticker
 	ticker := time.NewTicker(delay)
@@ -30,4 +25,22 @@ func RateLimit(in <-chan AuditEvent, out chan<- AuditEvent, rate uint, span time
 	close(out)
 	ticker.Stop()
 
+}
+
+func CalculateDelay(rate uint, span time.Duration) time.Duration {
+
+	// calculate the number of seconds to delay between messages
+	var delayTime float32 = float32(span.Seconds()) / float32(rate)
+
+	// upcast to milis and truncate
+	var numMilis int64 = int64(delayTime * 1000)
+
+	delay := time.Millisecond * time.Duration(numMilis)
+
+	// sanity check
+	if delay <= 0 {
+		delay = 1
+	}
+
+	return delay
 }
