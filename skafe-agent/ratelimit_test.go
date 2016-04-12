@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Check the ratelimiter is operating in the right range
 func TestRateLimit(t *testing.T) {
 
 	rate := uint(100)

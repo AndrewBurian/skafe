@@ -14,12 +14,20 @@ func RateLimit(in <-chan AuditEvent, out chan<- AuditEvent, rate uint, span time
 
 	delay := time.Millisecond * time.Duration(numMilis)
 
+	// create and start the ticker
+	ticker := time.NewTicker(delay)
+
+	// so long as there's events
 	for ev := range in {
+
+		// forawrd an event
 		out <- ev
 
-		time.Sleep(delay)
+		// wait for the rate limit tick
+		<-ticker.C
 	}
 
 	close(out)
+	ticker.Stop()
 
 }
