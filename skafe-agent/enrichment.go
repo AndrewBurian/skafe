@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"strings"
 )
 
 func Enricher(newEvents <-chan AuditEvent, enrichedEvents chan<- AuditEvent, conf *AgentConfig) {
@@ -66,7 +67,7 @@ func GetFullCmd(ev *AuditEvent) {
 		}
 	}
 
-	(*ev)["cmd"] = fullCmdBuf.String()
+	(*ev)["cmd"] = strings.TrimRight(fullCmdBuf.String(), " ")
 }
 
 func GetParentProcTitle(ev *AuditEvent) {
