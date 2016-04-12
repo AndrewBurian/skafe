@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/go-ini/ini"
 	"log"
@@ -13,6 +14,8 @@ type AgentConfig struct {
 	port uint16
 
 	log *log.Logger
+
+	tlsConf *tls.Config
 }
 
 func setupConfig(confPath string) (*AgentConfig, error) {

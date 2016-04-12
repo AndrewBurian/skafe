@@ -1,9 +1,11 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/gob"
 	"fmt"
 	"net"
+	"time"
 )
 
 const (
@@ -15,23 +17,47 @@ func ServerLink(events <-chan AuditEvent, conf *AgentConfig) {
 	var serverConn net.Conn
 	var err error
 
-Connecting:
+	// go forever
 	for {
-		serverConn, err = net.Dial("tcp", "192.168.0.19:6969")
-		if err != nil {
-			fmt.Println("Connection failed", err)
-		} else {
-			break Connecting
+
+		// connection phase
+		for {
+			// attempt to connect with either TLS or plain
+			if conf.tlsConf != nil {
+				serverConn, err = tls.Dial("tcp", net.JoinHostPort(conf.addr, string(conf.port)), conf.tlsConf)
+			} else {
+				serverConn, err = net.Dial("tcp", net.JoinHostPort(conf.addr, string(conf.port)))
+			}
+
+			// check for connection errors
+			if err != nil {
+
+				// on failure, try again
+				fmt.Println("Connection failed", err)
+				time.Sleep(10 * time.Second)
+				continue
+
+			}
+
+			// on success, continue on
+			break
 		}
-	}
 
-	encoder := gob.NewEncoder(serverConn)
+		// create the encoder
+		encoder := gob.NewEncoder(serverConn)
 
-	for {
+		// transmission phase
+		for event := range events {
 
-		event := <-events
+			// gob onto the network
+			err := encoder.Encode(event)
 
-		// glob onto the network
-		encoder.Encode(event)
+			// check if connection lost
+			if err != nil {
+
+				// go back to connection phase
+				break
+			}
+		}
 	}
 }
