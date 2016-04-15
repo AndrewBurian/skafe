@@ -36,7 +36,7 @@ func main() {
 	go Cache(enrichedEventChan, sendEventChan, 10, nil)
 	go Enricher(newEventChan, enrichedEventChan, conf)
 
-	if ! *auditd {
+	if !*auditd {
 		Audisp(newEventChan, os.Stdin)
 	} else {
 		Auditor(newEventChan, conf)

@@ -19,7 +19,7 @@ func TestUsername(t *testing.T) {
 // test resolved uid is being placed in event
 func TestSourceUser(t *testing.T) {
 
-	ev := AuditEvent {
+	ev := AuditEvent{
 		"uid": "0",
 	}
 
@@ -39,11 +39,11 @@ func TestSourceUser(t *testing.T) {
 // test full command reconstruction
 func TestFullCmd(t *testing.T) {
 
-	ev := AuditEvent {
+	ev := AuditEvent{
 		"argc": "3",
-		"a0": "test",
-		"a1": "command",
-		"a2": "string",
+		"a0":   "test",
+		"a1":   "command",
+		"a2":   "string",
 	}
 
 	GetFullCmd(&ev)
@@ -62,12 +62,12 @@ func TestFullCmd(t *testing.T) {
 // ensure no extra arguments are being used
 func TestFullCmdExtra(t *testing.T) {
 
-	ev := AuditEvent {
+	ev := AuditEvent{
 		"argc": "3",
-		"a0": "test",
-		"a1": "command",
-		"a2": "string",
-		"a3": "extra",
+		"a0":   "test",
+		"a1":   "command",
+		"a2":   "string",
+		"a3":   "extra",
 	}
 
 	GetFullCmd(&ev)

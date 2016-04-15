@@ -22,6 +22,7 @@ func Audisp(receivedEvents chan<- AuditEvent, in io.Reader) error {
 			return parseErr
 		}
 
+		//TODO assimilate events with the same serial number
 		receivedEvents <- event
 
 		if readErr == io.EOF {
